@@ -1,6 +1,6 @@
-############################################
-#   relative importace estimation plots    #
-############################################
+#############################################
+#   relative importance estimation plots    #
+#############################################
 
 step1riplots <- lapply(step1ri, function(i) {
   names <- names(sort(i$lmg, decreasing = FALSE))
