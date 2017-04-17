@@ -1,3 +1,7 @@
+#################################
+#   residual vs fitted plots    #
+#################################
+
 step1resfitplots <- lapply(step1models, function(i) {
     ggplot(i, aes(.fitted, .resid)) + 
     geom_point() +

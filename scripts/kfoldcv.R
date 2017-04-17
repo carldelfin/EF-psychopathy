@@ -1,7 +1,10 @@
-# from http://stackoverflow.com/a/16030020/3980197
-# via http://www.statmethods.net/stats/regression.html
-#
-#' Calculate k fold cross validated r2
+###########################################################
+#   from http://stackoverflow.com/a/16030020/3980197      #
+#   via http://www.statmethods.net/stats/regression.html  #
+#                                                         #
+#       function for k-fold cross-validated R2            #
+#               use lm objects as input                   #
+###########################################################
 
 kfoldcv = function(lmfit, folds = 5, runs = 10, seed = 2017) {
   library(magrittr)

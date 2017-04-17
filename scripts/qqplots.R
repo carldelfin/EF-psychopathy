@@ -1,3 +1,7 @@
+#################
+#   QQ plots    #
+#################
+
 ggQQ1 = function(lm) {
   d <- data.frame(std.resid = rstandard(lm))
   y <- quantile(d$std.resid[!is.na(d$std.resid)], c(0.25, 0.75))

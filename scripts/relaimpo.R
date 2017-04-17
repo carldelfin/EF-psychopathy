@@ -1,3 +1,7 @@
+############################################
+#   relative importace estimation plots    #
+############################################
+
 step1riplots <- lapply(step1ri, function(i) {
   names <- names(sort(i$lmg, decreasing = FALSE))
   values <- (as.numeric(sort(i$lmg, decreasing=FALSE))*100)

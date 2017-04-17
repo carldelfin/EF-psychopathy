@@ -1,3 +1,10 @@
+#################################################
+#   from http://stackoverflow.com/a/3820125     #
+#                                               #
+#       function for HC confidence intervals    #
+#             use lm objects as input           #
+#################################################
+
 confint.robust <- function (object, parm, level = 0.95, ...)
 {
   cf <- coef(object)
@@ -16,5 +23,3 @@ confint.robust <- function (object, parm, level = 0.95, ...)
   ci[] <- cf[parm] + ses %o% fac
   ci
 }
-
-# from http://stackoverflow.com/a/3820125
