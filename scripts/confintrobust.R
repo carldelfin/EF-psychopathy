@@ -1,9 +1,9 @@
-#################################################
-#   from http://stackoverflow.com/a/3820125     #
-#                                               #
-#       function for HC confidence intervals    #
-#             use lm objects as input           #
-#################################################
+###############################################
+#   from http://stackoverflow.com/a/3820125   #
+#                                             #
+#    function for HC confidence intervals     #
+#           use lm objects as input           #
+###############################################
 
 confint.robust <- function (object, parm, level = 0.95, ...)
 {

@@ -1,6 +1,6 @@
-#################################
-#   residual vs fitted plots    #
-#################################
+##################################
+#   residuals vs fitted plots    #
+##################################
 
 step1resfitplots <- lapply(step1models, function(i) {
     ggplot(i, aes(.fitted, .resid)) + 

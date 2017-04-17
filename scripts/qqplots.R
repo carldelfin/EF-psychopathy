@@ -1,6 +1,6 @@
-#################
-#   QQ plots    #
-#################
+################
+#   QQ plots   #
+################
 
 ggQQ1 = function(lm) {
   d <- data.frame(std.resid = rstandard(lm))
