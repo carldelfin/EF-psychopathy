@@ -6,9 +6,9 @@
 #               use lm objects as input                   #
 ###########################################################
 
-# default set-up is 5 fold CV repeated 10 times
+# default set-up is 5 fold CV repeated 100 times
 
-kfoldcv = function(lmfit, folds = 5, runs = 10, seed = 2017) {
+kfoldcv = function(lmfit, folds = 5, runs = 100, seed = 2017) {
   library(magrittr)
   
   # get data
