@@ -12,10 +12,10 @@ ehthumbs.db
 Thumbs.db
 
 # sensitive stuff
+# but make an exception for sessioninfo.txt
 /manuscript
-/results
+results/*
+!results/sessioninfo.txt
 /figures
 /data
 
-# make an exception for the session info
-!/results/sessioninfo.txt
