@@ -2,19 +2,7 @@
 title: "Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders"
 author: "Carl Delfin"
 date: "28 April 2017"
-output:
-  pdf_document:
-    fig_caption: yes
-    highlight: tango
-    includes:
-      in_header: styles.sty
-    latex_engine: xelatex
-    number_sections: yes
-    toc: yes
-    toc_depth: 3
-mainfont: Verdana
-fontsize: 12pt
-classoption: a4paper
+output: pdf_document
 ---
 
 # Introduction
@@ -48,7 +36,7 @@ library(ggplot2)      # pretty graphics
 library(broom)        # 'tidy' function
 library(relaimpo)     # relative importance estimation
 library(lmtest)       # wald F test
-library(sandwich)     # heteroskedasticity-consistent standard errors
+library(sandwich)     # heteroscedasticity-consistent standard errors
 library(car)          # variance inflation factors
 library(pwr)          # power calculation
 library(cowplot)      # 'plot_grid' function
@@ -571,5 +559,5 @@ write(sessInfo, file = "sessioninfo.txt")
 
 Remove everything but the data. Not really necessary but I get anxious when the global environment is messy.
 ```{r}
-#keep(data, sure=TRUE)
+keep(data, sure=TRUE)
 ```
