@@ -1,13 +1,11 @@
 ###########################################################
 #   from http://stackoverflow.com/a/16030020/3980197      #
 #   via http://www.statmethods.net/stats/regression.html  #
+#                with some own adaptations                #
 #                                                         #
-#       function for k-fold cross-validated R2            #
-#       se function is used to get SE of CVR2             #
+#       A function for k-fold cross-validated R2          #
 #               use lm objects as input                   #
 ###########################################################
-
-se <- function(x) sqrt(var(x)/length(x))
 
 kfoldcv = function(lmfit, folds = folds, runs = runs, seed = seed) {
   library(magrittr)
@@ -64,6 +62,5 @@ kfoldcv = function(lmfit, folds = folds, runs = runs, seed = seed) {
   # return
   c("R2" = summary(lmfit)$r.squared,
     "Adj. R2" = summary(lmfit)$adj.r.squared,
-    "CV R2" = mean(v_runs),
-    "SE CV R2" = se(v_runs))
+    "CV R2" = CI(v_runs, ci=0.95))
 }

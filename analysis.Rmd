@@ -19,7 +19,7 @@ classoption: a4paper
 
 # Introduction
 
-This is an RMarkdown document containing the R code used for all statistical analysis in the study *Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders*. All code is available at https://github.com/carldelfin/EF-psychopathy. Scripts that are externally sourced are located in the *scripts* subfolder.
+This is an RMarkdown document containing the R code used for all statistical analysis in the study *Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders*. All code is available at https://github.com/carldelfin/EF-psychopathy.
 
 # Set-up
 
@@ -40,7 +40,8 @@ source('scripts/confintrobust.R')
 ## Load packages
 ```{r, message=FALSE, warning=TRUE}
 library(foreign)      # 'read.spss' function
-library(psych)        # 'describe' function in Table 1
+library(psych)        # 'describe' function in table_1.R
+library(Rmisc)        # 'CI' function in kfoldcv
 library(plyr)         # 'count' function
 library(dplyr)        # 'group_by' function
 library(ggplot2)      # pretty graphics
@@ -327,7 +328,7 @@ tidys2 <- lapply(step2coefHC, tidy) # tidy object for step 2 models
 
 ## Intercept and confidence intervals
 
-The intercept is removed (the intercept was included when the regression models were estimated, but since its interpretation is fairly meaningless, it is removed from the output, allowing us to cut down on reported p-values). Also, HC confidence intervals are added.
+The intercept is removed (the intercept was included when the regression models were estimated, but since its interpretation is fairly meaningless, it is removed from the output, allowing us to cut down on reported p-values). Also, HC confidence intervals for predictors are added.
 ```{r}
 for (i in 1:length(tidys1)) {   # tidys1
   tidys1[[i]] <- tidys1[[i]][-1,]
@@ -402,38 +403,40 @@ for (i in 1:length(tab)) {
   x <- rep(NA, ncol(tab[[i]]))
   
   # bind
-  tab[[i]] <- rbind(tab[[i]], x, x, x, x, x, x, x, x, x)
+  tab[[i]] <- rbind(tab[[i]], x, x, x, x, x, x, x, x, x, x)
   
   # add row names (perhaps redudant, see later sections with FlexTable)
   row.names(tab[[i]]) <- c("SOCMITT5", "SOCPS", "IEDstages",
                            "IEDstageser", "SWMstrategy", "SWMtotaler",
                            "ADHD", "SUD","F", "Fp", "Fq",
-                           "CV R2", "SE CV R2", "Delta F", "Delta Fp",
-                           "Delta Fq", "Delta CV R2")
+                           "CV R2", "CI CV R2 LL", "CI CV R2 UL",
+                           "Delta F", "Delta Fp", "Delta Fq", "Delta CV R2")
 }
 ```
 
 ### Model statistics
 
-Now for model statistics, all of which are stored in a bunch of lists what were created earlier using `lapply`. Model statistics are to be stored in the *B* column, which is at indices ,1 (step 1) and ,7 (step 2). Since characters are not allowed in that column, a separate row is necessary for the p values.
+Now for model statistics, all of which are stored in a bunch of lists what were created earlier using `lapply`. Model statistics are to be stored in the *B* column, which is at indices ,1 (step 1) and ,7 (step 2). Since characters are not allowed in that column, a separate row is necessary for the p-values.
 ```{r}
 for (i in 1:length(tab)) {
   # step 1
   tab[[i]][9,1] <- step1wald[[i]]$F[2]          # model F value
   tab[[i]][10,1] <- step1wald[[i]]$`Pr(>F)`[2]  # model F p-value
-  tab[[i]][12,1] <- step1cv[[i]][3]             # CV R2
-  tab[[i]][13,1] <- step1cv[[i]][4]             # SE CV R2
+  tab[[i]][12,1] <- step1cv[[i]][4]             # CV R2
+  tab[[i]][13,1] <- step1cv[[i]][5]             # CI CV R2 LL
+  tab[[i]][14,1] <- step1cv[[i]][3]             # CI CV R2 UL
   
   # step 2
   tab[[i]][9,7] <- step2wald[[i]]$F[2]          # model F value
   tab[[i]][10,7] <- step2wald[[i]]$`Pr(>F)`[2]  # model F p-value
-  tab[[i]][12,7] <- step2cv[[i]][3]             # CV R2
-  tab[[i]][13,7] <- step2cv[[i]][4]             # SE CV R2
+  tab[[i]][12,7] <- step2cv[[i]][4]             # CV R2
+  tab[[i]][13,7] <- step2cv[[i]][5]             # CI CV R2 LL
+  tab[[i]][14,7] <- step2cv[[i]][3]             # CI CV R2 UL
   
   # model comparison
-  tab[[i]][17,7] <- step2cv[[i]][3] - step1cv[[i]][3] # CV R2 change
-  tab[[i]][14,7] <- waldmod[[i]]$F[2]           # model change F
-  tab[[i]][15,7] <- waldmod[[i]]$`Pr(>F)`[2]    # model change F p-value
+  tab[[i]][18,7] <- step2cv[[i]][3] - step1cv[[i]][3] # CV R2 change
+  tab[[i]][15,7] <- waldmod[[i]]$F[2]           # model change F
+  tab[[i]][16,7] <- waldmod[[i]]$`Pr(>F)`[2]    # model change F p-value
 }
 ```
 
@@ -444,27 +447,27 @@ Again, q-values are added "manually". **Be vigilant**.
 # model 1
 tab[[1]][11,1] <- q[7]        # step 1 model 1 F q-value
 tab[[1]][11,7] <- q[16]       # step 2 model 1 F q-value
-tab[[1]][16,7] <- q[17]       # model 1 comparison q-value
+tab[[1]][17,7] <- q[17]       # model 1 comparison q-value
 
 # model 2
 tab[[2]][11,1] <- q[24]       # step 1 model 2 F q-value
 tab[[2]][11,7] <- q[33]       # step 2 model 2 F q-value
-tab[[2]][16,7] <- q[34]       # model 2 comparison q-value
+tab[[2]][17,7] <- q[34]       # model 2 comparison q-value
 
 # model 3
 tab[[3]][11,1] <- q[41]       # step 1 model 3 F q-value
 tab[[3]][11,7] <- q[50]       # step 2 model 3 F q-value
-tab[[3]][16,7] <- q[51]       # model 3 comparison q-value
+tab[[3]][17,7] <- q[51]       # model 3 comparison q-value
 
 # model 4
 tab[[4]][11,1] <- q[58]       # step 1 model 4 F q-value
 tab[[4]][11,7] <- q[67]       # step 2 model 4 F q-value
-tab[[4]][16,7] <- q[68]       # model 4 comparison q-value
+tab[[4]][17,7] <- q[68]       # model 4 comparison q-value
 
 # model 5
-tab[[5]][11,1] <- q[75]       # step 1 model 4 F q-value
-tab[[5]][11,7] <- q[84]       # step 2 model 4 F q-value
-tab[[5]][16,7] <- q[85]       # model 4 comparison q-value
+tab[[5]][11,1] <- q[75]       # step 1 model 5 F q-value
+tab[[5]][11,7] <- q[84]       # step 2 model 5 F q-value
+tab[[5]][17,7] <- q[85]       # model 5 comparison q-value
 ```
 
 # Final results
@@ -482,8 +485,8 @@ for (i in 1:length(tab)) {
   
   # FlexTable won't allow to use rownames, so we need to create 'fake' rownames in the form of a column
   tab[[i]]$rownames <- c("SOCMITT5", "SOCPS", "IEDstages", "IEDstageser", "SWMstrategy",
-                         "SWMtotaler", "ADHD", "SUD", "F", "Fp", "Fq", "CV R2", "SE CV R2",
-                         "Delta F", "Delta Fp", "Delta Fq", "Delta CV R2")
+                         "SWMtotaler", "ADHD", "SUD", "F", "Fp", "Fq", "CV R2", "CI CV R2 LL",
+                         "CI CV R2 UL", "Delta F", "Delta Fp", "Delta Fq", "Delta CV R2")
   
   # reorder columns (again), so that rownames is first
   col_idx <- grep("rownames", names(tab[[i]]))
@@ -558,9 +561,10 @@ ggsave(filename="figures/riplot.tiff", plot=riplot, height=8, width=14, dpi=300)
 
 # Session info
 
-Here's everything:
+A text file with the session info:
 ```{r}
-sessionInfo()
+sessInfo <- capture.output(sessionInfo())
+write(sessInfo, file = "results/sessioninfo.txt")
 ```
 
 ## Clean environment
