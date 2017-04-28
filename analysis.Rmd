@@ -564,7 +564,7 @@ ggsave(filename="figures/riplot.tiff", plot=riplot, height=8, width=14, dpi=300)
 A text file with the session info:
 ```{r}
 sessInfo <- capture.output(sessionInfo())
-write(sessInfo, file = "results/sessioninfo.txt")
+write(sessInfo, file = "sessioninfo.txt")
 ```
 
 ## Clean environment
