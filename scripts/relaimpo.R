@@ -22,7 +22,7 @@ step1riplots <- lapply(step1ri, function(i) {
           axis.title.y = element_text(size=11),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
-          plot.title = element_text(size = 12))
+          plot.title = element_text(size = 11))
 })
 
 step2riplots <- lapply(step2ri, function(i) {
