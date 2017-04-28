@@ -38,7 +38,6 @@ library(relaimpo)     # relative importance estimation
 library(lmtest)       # wald F test
 library(sandwich)     # heteroscedasticity-consistent standard errors
 library(car)          # variance inflation factors
-library(pwr)          # power calculation
 library(cowplot)      # 'plot_grid' function
 library(qvalue)       # FDR correction
 library(ReporteRs)    # 'FlexTable' function
