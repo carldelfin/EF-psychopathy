@@ -196,7 +196,7 @@ for (i in 1:5) {
 
 The top row (panels A-E) shows to all step 1 models and the bottom row (panels F-J) shows all step 2 models.
 
-There are definite trends visible suggesting that the homoscedasticity assumption (i.e., constant variance of the residuals) of OLS may be violated, and thus inferences may be numerically unstable (although estimates are still unbiased). Transforming makes interpretation difficult, so instead, all inferences will be based on heteroscedasticity consistent standard errors using `vcovHC` (defaulting to the recommended type HC3)[http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/00TAS.pdf].
+There are definite trends visible suggesting that the homoscedasticity assumption (i.e., constant variance of the residuals) of OLS may be violated, and thus inferences may be numerically unstable (although estimates are still unbiased). Transforming makes interpretation difficult, so instead, all inferences will be based on heteroscedasticity consistent standard errors using `vcovHC` [defaulting to the recommended type HC3](http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/00TAS.pdf).
 ```{r}
 source("scripts/resfitplots.R")
 rfplots <- plot_grid(
