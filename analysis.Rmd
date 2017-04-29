@@ -7,7 +7,7 @@ output: pdf_document
 
 # Introduction
 
-This is an RMarkdown document containing the R code used for all statistical analysis in the study *Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders*. All code is available at https://github.com/carldelfin/EF-psychopathy.
+This is an RMarkdown document containing the R code used for all statistical analysis in the study *Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders*.
 
 # Set-up
 
@@ -19,7 +19,7 @@ rm(list=ls())
 
 ## Functions
 
-Source functions for k-fold cross-validation and confidence interval estimation using heteroscedasticity consistent standard errors.
+Source functions for *k*-fold cross-validation and confidence interval estimation using heteroscedasticity consistent standard errors.
 ```{r}
 source('scripts/kfoldcv.R')
 source('scripts/confintrobust.R')
@@ -46,24 +46,28 @@ library(gdata)        # 'keep' function
 
 ## Prepare data
 
-Set working directory, read data, recalcuate one variable (from milliseconds to seconds), and set seed (I use the year the analysis was conducted, 2017).
+Set working directory, read data, recalcuate one variable (from milliseconds to seconds), and set seed (I use the year the analysis was conducted, i.e. 2017).
 ```{r, warning=FALSE}
-# Mac OS
 setwd("/Users/delfin/Dropbox/forskning/projekt/EF-psychopathy/")
 
 # if on Windows, uncomment and use this line instead
 # setwd("C:\\Users\\Lokaladm\\Dropbox\\forskning\\projekt\\EF-psychopathy\\")
 
+# read the data file
 data = read.spss("data/data_20170317_N237.sav", to.data.frame = TRUE)
+
+# recode variable
 data$SOCMITT5 <- data$SOCMITT5/1000
-seed = 2017 # defaults to Mersenne-Twister
+
+# set seed (defaults to Mersenne-Twister)
+seed = 2017
 ```
 
 # Descriptive overview of data
 
 ## Numerical variables
 
-Table 1 consists of an overview of numerical variables. Using FlexTable, a Word document containing the table is created.
+Table 1 in the article consists of an overview of numerical variables. Using FlexTable, a Word document with the table is created.
 ```{r}
 source("scripts/table_1.R")
 
@@ -93,9 +97,9 @@ doc <- addFlexTable(doc, table1)
 writeDoc(doc, file = "results/table1.docx")
 ```
 
-## Categorical
+## Categorical variables
 
-The ADHD and SUD variables are summarized in text, so output is just a .txt with the numbers we want.
+The ADHD and SUD variables are summarized in text, so output is just a .txt.
 ```{r}
 catdesc <- as.data.frame(summarise(group_by(data,SUD,ADHD),count=n()))
 catdesc <- capture.output(
@@ -113,7 +117,7 @@ write(catdesc, file = "results/categoricaldescription.txt")
 
 We want to investigate how well PCL-R scores (i.e., psychopathic traits) are predicted from a set of executive function (EF) measures. We then want to assess the impact of ADHD and SUD on these predictions. To do so, the regression models are built in two steps, with step 1 using EF predictors only and step 2 using EF + ADHD & SUD predictors.
 
-There are five outcomes (or dependent variables) and two steps, thus ten regression models to be built. All models in each step are contained within a *list* so we can use `lapply` to do stuff to all models at once. The formulas in must be human readable for `lapply` to work properly, hence the pre-specification of model formulas.
+There are five outcomes (or dependent variables) and two steps, thus ten regression models to be built. All models in each step are contained within a list so we can use `lapply` to do stuff to all models at once. The formulas in must be human readable for `lapply` to work properly, hence the pre-specification of model formulas.
 
 ## Model formulas
 
@@ -141,14 +145,14 @@ The model building process goes like this:
 
 Then for each model:
 
-2.  Do k-fold cross-validaton
-3.  Calculate model F using Wald test using heteroscedasticity consistent (HC) standard errors
+2.  Do *k*-fold cross-validaton
+3.  Calculate model *F* using Wald test using heteroscedasticity consistent (HC) standard errors
 4.  Calculate coefficient statistics using HC standard errors
 5.  Calculate coefficient confidence intervals using HC standard errors
 5.  Calculate variance inflation factors
 6.  Calculate relative importance estimation
 
-### Step 1
+### Build step 1 models
 ```{r}
 step1models <- lapply(step1formulas,                                  # create list,
                       function(x, data) eval(bquote(lm(.(x),data))),  # this line evaluates formulas in
@@ -162,7 +166,7 @@ step1vif <- lapply(step1models, vif)                                  # VIFs
 step1ri <- lapply(step1models, calc.relimp, rela=T)                   # relative importance
 ```
 
-### Step 2
+### Build step 2 models
 ```{r}
 step2models <- lapply(step2formulas,                                  # same as above but for step 2
                       function(x, data) eval(bquote(lm(.(x),data))),
@@ -178,7 +182,7 @@ step2ri <- lapply(step2models, calc.relimp, rela=T)
 
 ## Model comparison
 
-Compare all step 1 and 2 models, again with Wald F test using HC standard errors
+Compare all step 1 and 2 models, again with Wald *F* using HC standard errors
 ```{r}
 waldmod <- NULL
 for (i in 1:5) {
@@ -190,7 +194,9 @@ for (i in 1:5) {
 
 ## Residual vs. fitted plots
 
-The top row (panels A-E) shows to all step 1 models and the bottom row (panels F-J) shows all step 2 models. There are definite trends visible, suggesting that the homoscedasticity assumption (i.e., constant variance of the residuals) of OLS may be violated, making inferences numerically unstable (although estimates are still unbiased). Transforming makes interpretation difficult, so instead, all inferences will be based on heteroscedasticity consistent standard errors using `vcovHC`, defaulting to the recommended type HC3.
+The top row (panels A-E) shows to all step 1 models and the bottom row (panels F-J) shows all step 2 models.
+
+There are definite trends visible suggesting that the homoscedasticity assumption (i.e., constant variance of the residuals) of OLS may be violated, and thus inferences may be numerically unstable (although estimates are still unbiased). Transforming makes interpretation difficult, so instead, all inferences will be based on heteroscedasticity consistent standard errors using `vcovHC` (defaulting to the recommended type HC3)[http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/00TAS.pdf].
 ```{r}
 source("scripts/resfitplots.R")
 rfplots <- plot_grid(
