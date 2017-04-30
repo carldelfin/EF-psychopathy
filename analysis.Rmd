@@ -2,7 +2,13 @@
 title: "Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders"
 author: "Carl Delfin"
 date: "28 April 2017"
-output: pdf_document
+output:
+  html_document:
+    theme: simplex
+    highlight: pygments
+    toc: true
+    toc_depth: 3
+    number_sections: true
 ---
 
 # Introduction
