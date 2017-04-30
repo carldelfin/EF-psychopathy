@@ -9,6 +9,8 @@ output: pdf_document
 
 This is an RMarkdown document containing the R code used for all statistical analysis in the study *Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders*.
 
+In the document, `this` refers to a function within R, and  [this](https://en.wikipedia.org/wiki/Hyperlink) is a link to some external website.
+
 # Set-up
 
 ## Clear environment
@@ -67,7 +69,7 @@ seed = 2017
 
 ## Numerical variables
 
-Table 1 in the article consists of an overview of numerical variables. Using FlexTable, a Word document with the table is created. See *table_1.R* for details.
+Table 1 in the article consists of an overview of numerical variables. Using `FlexTable`, a Word document with the table is created. See *table_1.R* for details.
 ```{r}
 source("scripts/table_1.R")
 
