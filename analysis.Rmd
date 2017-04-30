@@ -28,8 +28,8 @@ source('scripts/confintrobust.R')
 ## Load packages
 ```{r, message=FALSE, warning=TRUE}
 library(foreign)      # 'read.spss' function
-library(psych)        # 'describe' function in table_1.R
-library(Rmisc)        # 'CI' function in kfoldcv
+library(psych)        # required for 'describe' function in table_1.R
+library(Rmisc)        # required for 'CI' function in kfoldcv.R
 library(plyr)         # 'count' function
 library(dplyr)        # 'group_by' function
 library(ggplot2)      # pretty graphics
@@ -46,7 +46,7 @@ library(gdata)        # 'keep' function
 
 ## Prepare data
 
-Set working directory, read data, recalcuate one variable (from milliseconds to seconds), and set seed (I use the year the analysis was conducted, i.e. 2017).
+Set working directory, read data, recalcuate one variable (from milliseconds to seconds), and set seed (I use the year the analysis was conducted, in this case 2017). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
 ```{r, warning=FALSE}
 setwd("/Users/delfin/Dropbox/forskning/projekt/EF-psychopathy/")
 
@@ -59,7 +59,7 @@ data = read.spss("data/data_20170317_N237.sav", to.data.frame = TRUE)
 # recode variable
 data$SOCMITT5 <- data$SOCMITT5/1000
 
-# set seed (defaults to Mersenne-Twister)
+# set seed
 seed = 2017
 ```
 
@@ -67,7 +67,7 @@ seed = 2017
 
 ## Numerical variables
 
-Table 1 in the article consists of an overview of numerical variables. Using FlexTable, a Word document with the table is created.
+Table 1 in the article consists of an overview of numerical variables. Using FlexTable, a Word document with the table is created. See *table_1.R* for details.
 ```{r}
 source("scripts/table_1.R")
 
@@ -101,7 +101,10 @@ writeDoc(doc, file = "results/table1.docx")
 
 The ADHD and SUD variables are summarized in text, so output is just a .txt.
 ```{r}
+# create a data frame
 catdesc <- as.data.frame(summarise(group_by(data,SUD,ADHD),count=n()))
+
+# capture the output of 'cat'
 catdesc <- capture.output(
   cat("\nA total of", catdesc[1,3], "participants did not reach the criteria for either ADHD or SUD"),
   cat("\nA total of", plyr::count(data$ADHD)[2,2], "participants reached the criteria for ADHD"),
@@ -110,18 +113,21 @@ catdesc <- capture.output(
   cat("\nA total of", catdesc[3,3], "participants reached the criteria for SUD but not for ADHD"),
   cat("\nA total of", catdesc[4,3], "participants reached the criteria for both ADHD and SUD"))
 
+# save to file
 write(catdesc, file = "results/categoricaldescription.txt")
 ```
 
 # Regression models
 
-We want to investigate how well PCL-R scores (i.e., psychopathic traits) are predicted from a set of executive function (EF) measures. We then want to assess the impact of ADHD and SUD on these predictions. To do so, the regression models are built in two steps, with step 1 using EF predictors only and step 2 using EF + ADHD & SUD predictors.
+We (1) want to investigate how well PCL-R scores (i.e., psychopathic traits) are predicted from a set of executive function (EF) measures and then (2) assess the impact of ADHD and SUD on these predictions. To do so, the regression models are built in two steps, with step 1 using EF predictors only and step 2 using EF + ADHD & SUD predictors. This procedure is called *hierarchical regression* in most psychology contexts, which is **not** to be confused with [multilevel modeling](https://en.wikipedia.org/wiki/Multilevel_model), sometimes also called hierarchical linear regression or hierarchical linear modeling. 
 
-There are five outcomes (or dependent variables) and two steps, thus ten regression models to be built. All models in each step are contained within a list so we can use `lapply` to do stuff to all models at once. The formulas in must be human readable for `lapply` to work properly, hence the pre-specification of model formulas.
+There are five outcomes (or dependent variables) and two steps, thus ten regression models in total. All models in each step are stored within a list, so that we can use `lapply` to do stuff to all models at once. The formulas in must be human readable for `lapply` to work properly, hence the pre-specification of model formulas.
 
 ## Model formulas
 
+Model formulas are also stored in lists.
 ```{r}
+# step 1 models
 step1formulas <- list(
   Facet1 ~ SOCMITT5+SOCPS+IEDstages+IEDstageser+SWMstrategy+SWMtotaler,
   Facet2 ~ SOCMITT5+SOCPS+IEDstages+IEDstageser+SWMstrategy+SWMtotaler,
@@ -129,6 +135,7 @@ step1formulas <- list(
   Facet4 ~ SOCMITT5+SOCPS+IEDstages+IEDstageser+SWMstrategy+SWMtotaler,
   TotalScore ~ SOCMITT5+SOCPS+IEDstages+IEDstageser+SWMstrategy+SWMtotaler)
 
+# step 2 models
 step2formulas <- list(
   Facet1 ~ SOCMITT5+SOCPS+IEDstages+IEDstageser+SWMstrategy+SWMtotaler+ADHD+SUD,
   Facet2 ~ SOCMITT5+SOCPS+IEDstages+IEDstageser+SWMstrategy+SWMtotaler+ADHD+SUD,
@@ -146,10 +153,10 @@ The model building process goes like this:
 Then for each model:
 
 2.  Do *k*-fold cross-validaton
-3.  Calculate model *F* using Wald test using heteroscedasticity consistent (HC) standard errors
+3.  Calculate model *F* using `waldtest` with [heteroscedasticity consistent (HC) standard errors](https://en.wikipedia.org/wiki/Heteroscedasticity-consistent_standard_errors)
 4.  Calculate coefficient statistics using HC standard errors
 5.  Calculate coefficient confidence intervals using HC standard errors
-5.  Calculate variance inflation factors
+5.  Calculate [variance inflation factors](https://en.wikipedia.org/wiki/Variance_inflation_factor)
 6.  Calculate relative importance estimation
 
 ### Build step 1 models
@@ -196,7 +203,7 @@ for (i in 1:5) {
 
 The top row (panels A-E) shows to all step 1 models and the bottom row (panels F-J) shows all step 2 models.
 
-There are definite trends visible suggesting that the homoscedasticity assumption (i.e., constant variance of the residuals) of OLS may be violated, and thus inferences may be numerically unstable (although estimates are still unbiased). Transforming makes interpretation difficult, so instead, all inferences will be based on heteroscedasticity consistent standard errors using `vcovHC` [defaulting to the recommended type HC3](http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/00TAS.pdf).
+There are definite trends visible suggesting that the homoscedasticity assumption (i.e., constant variance of the residuals) of OLS may be violated, and thus inferences may be numerically unstable (although estimates are still unbiased). Transforming makes interpretation difficult, so instead, all inferences will be based on heteroscedasticity consistent standard errors using `vcovHC` [defaulting to the recommended type, HC3](http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/00TAS.pdf).
 ```{r}
 source("scripts/resfitplots.R")
 rfplots <- plot_grid(
@@ -218,7 +225,7 @@ ggsave(filename="figures/rfplots.tiff", plot=rfplots, height=6, width=14, dpi=30
 
 ## QQ plots
 
-QQ plots are used to look at the distribution of residuals. Apart from Facet 1 models (panels A and F; looking a bit lognormal) the residuals seem OK. The consequences of non-normal distributions are that estimates may not be optimal that that confidence intervals and inference tests are invalid. However, OLS is actually quite robust and only really long-tailed distributions cause problems, and larger sample sizes also alleviate the problem. In our case, we'll proceed as usual (although bear this is mind).
+QQ plots are used to look at the distribution of residuals. Apart from PCL-R Interpersonal facet models (panels A and F; looking somewhat lognormal) the residuals seem OK. The consequences of non-normal distributions are that estimates may not be optimal, and that confidence intervals and inference tests are invalid. However, ordinary least squares regression is actually quite robust and only really long-tailed distributions cause problems, and larger sample sizes also alleviate the problem. In our case, we'll proceed as usual (although bear this is mind).
 ```{r}
 source("scripts/qqplots.R")
 qqplots <- plot_grid(
@@ -240,19 +247,21 @@ ggsave(filename="figures/qqplots.tiff", plot=qqplots, height=6, width=14, dpi=30
 
 ## Variance inflation factors
 
-Collinearity is assessed by looking at variance inflation factors (VIFs). VIFs are presented in text, so we need a .txt with the output. There are no VIFs > 2, which suggests no issues with collinearity.
+Collinearity is assessed by looking at variance inflation factors (VIFs). VIFs are presented in text, so we need a .txt with the output.
 ```{r}
 # bind step 1 and step 2 lists
 vifs <- rbind(step1vif, step2vif)
 
 # print and save range of VIFs
 vifs <- capture.output(cat("The VIFs range from", range(vifs)[1], "to", range(vifs)[2]))
+
+# save to .txt
 write(vifs, file = "results/vifs.txt")
 ```
 
 # False discovery rate correction
 
-Before we do FDR correction, all p-values must be stored in a single vector. It's important to keep track of which p-value corresponds to which test, otherwise things will get messy when assigning the corresponding q-value later on. **This is crucial! Make sure you understand the order or the p vector**.
+Before we do FDR correction, all *p*-values must be stored in a single vector. It's important to keep track of which *p*-value corresponds to which test, otherwise things will get messy when assigning the corresponding q-value later on. **This is crucial! Make sure you understand the order or the p vector**.
 ```{r}
 p <- NULL
 for (i in 1:5) {
@@ -275,10 +284,10 @@ Now, using the p vector, we can do FDR correction.
 ```{r}
 fdrcorr <- qvalue(p)  # FDR correction
 q <- NULL
-q <- fdrcorr$qvalues  # store q-values in q
+q <- fdrcorr$qvalues  # store q-values in q vector
 ```
 
-If one were to plot the p and q vectors against their respective indices, one would see that the q-values are "lifted" from the bottom and "pushed" from the top, i.e., fewer low and high q-values than p-values, which is the expected result. Going a bit further, we instead plot the p and q vectors together, but with different colors. We also plot arrows pointing to the direction of change, i.e. if the q-value is lower or higher than the corresponding p-value.
+If one were to plot the p and q vectors against their respective indices, one would see that the *q*-values are "lifted" from the bottom and "pushed" from the top, i.e., fewer low and high *q*-values than *p*-values, which is the expected result. Going a bit further, we instead plot the p and q vectors together, but with different colors. We also plot arrows pointing to the direction of change, i.e. if the *q*-value is lower or higher than the corresponding *p*-value.
 ```{r}
 # create data frames
 pp <- as.data.frame(p)
@@ -306,6 +315,7 @@ ppqqplot <- ggplot(ppqq, aes(x=seq, y=val, col=var)) +
   scale_y_continuous(name="Value") +
   scale_x_continuous(name="")
 
+# save for supplementary material
 ggsave(filename="figures/ppqqplot.tiff", plot=ppqqplot, height=6, width=10, dpi=300)
 ```
 
@@ -321,43 +331,45 @@ tidys2 <- lapply(step2coefHC, tidy) # tidy object for step 2 models
 
 ## Intercept and confidence intervals
 
-The intercept is removed (the intercept was included when the regression models were estimated, but since its interpretation is fairly meaningless, it is removed from the output, allowing us to cut down on reported p-values). Also, HC confidence intervals for predictors are added.
+The intercept is removed (the intercept was included when the regression models were estimated, but since its interpretation is fairly meaningless, it is removed from the output, allowing us to cut down on reported *p*-values). Also, HC confidence intervals for predictors are added.
 ```{r}
-for (i in 1:length(tidys1)) {   # tidys1
-  tidys1[[i]] <- tidys1[[i]][-1,]
-  tidys1[[i]]$cilow <- step1ci[[i]][-1,1]
-  tidys1[[i]]$cihigh <- step1ci[[i]][-1,2]
+for (i in 1:length(tidys1)) {                 # tidys1
+  tidys1[[i]] <- tidys1[[i]][-1,]             # remove intercept 
+  tidys1[[i]]$cilow <- step1ci[[i]][-1,1]     # LL CI
+  tidys1[[i]]$cihigh <- step1ci[[i]][-1,2]    # UL CI
 }
 
-for (i in 1:length(tidys2)) {   # tidys2
-  tidys2[[i]] <- tidys2[[i]][-1,]
-  tidys2[[i]]$cilow <- step2ci[[i]][-1,1]
-  tidys2[[i]]$cihigh <- step2ci[[i]][-1,2]
+for (i in 1:length(tidys2)) {                 # tidys2
+  tidys2[[i]] <- tidys2[[i]][-1,]             # remove intercept
+  tidys2[[i]]$cilow <- step2ci[[i]][-1,1]     # LL CI
+  tidys2[[i]]$cihigh <- step2ci[[i]][-1,2]    # UL CI
 }
 ```
 
-## Adding coefficient q-values
+## Adding coefficient *q*-values
 
-To add the coefficient q-values, we'll have to go the manual way (probably could have been done programatically if I were a better coder...). It's just a matter of selecting the correct indices of the q vector, **but make sure they correspond to the correct ones**.
+To add the coefficient *q*-values, we'll have to go the manual way (probably could have been done programatically if I were a better coder...).
+
+In any case, it's just a matter of selecting the correct indices of the q vector, **but make sure they are indeed the correct ones**.
 ```{r}
-# tidys1
-tidys1[[1]]$q.value <- q[1:6]
-tidys1[[2]]$q.value <- q[18:23]
-tidys1[[3]]$q.value <- q[35:40]
-tidys1[[4]]$q.value <- q[52:57]
-tidys1[[5]]$q.value <- q[69:74]
+# tidys1, i.e. step 1 models
+tidys1[[1]]$q.value <- q[1:6]     # six Interpersonal facet coefficient q-values
+tidys1[[2]]$q.value <- q[18:23]   # six Affective facet coefficient q-values
+tidys1[[3]]$q.value <- q[35:40]   # six Lifestyle facet coefficient q-values
+tidys1[[4]]$q.value <- q[52:57]   # six Antisocial facet coefficient q-values
+tidys1[[5]]$q.value <- q[69:74]   # six Total score coefficient q-values
 
-# tidys2
-tidys2[[1]]$q.value.1 <- q[8:15]
-tidys2[[2]]$q.value.1 <- q[25:32]
-tidys2[[3]]$q.value.1 <- q[42:49]
+# tidys2, i.e. step 2 models
+tidys2[[1]]$q.value.1 <- q[8:15]  # same procedure as above,
+tidys2[[2]]$q.value.1 <- q[25:32] # but now with 8 q-values,
+tidys2[[3]]$q.value.1 <- q[42:49] # since there are 8 predictors in step 2
 tidys2[[4]]$q.value.1 <- q[59:66]
 tidys2[[5]]$q.value.1 <- q[76:83]
 ```
 
-## Preparing results tables
+## Prepare results
 
-### Creating a list of tables
+### Create a list of tables
 
 We add rows for ADHD and SUD, then merge *tidys1* and *tidys2* into *tab*.
 ```{r}
@@ -365,31 +377,32 @@ for (i in 1:length(tidys1)) {
   x <- rep(NA, ncol(tidys1[[i]]))
   tidys1[[i]] <- rbind(tidys1[[i]], x, x)
 }
+
 # merge using mapply and cbind
 tab <- mapply(cbind, tidys1, tidys2, SIMPLIFY=F)
 ```
 
-Now that we have a table (*tab* is actually of a list of data frames, but still), there's some cleaning up to do. The HC standard error is removed, since I think the HC confidence interval is more intuitive. The standard errors are in columns 3 and 11, while column 1 and 9 contain row names, so those will also be removed.
+Now that we have a table (*tab* is actually of a list of data frames, but still), there's some cleaning up to do. The HC standard error is removed, since I think the HC confidence interval is more intuitive. The standard errors are in columns 3 and 11, while column 1 and 9 contain row names, so those will also be removed (we'll sort that issue out later). Also, I probably could have used some variant of `apply` for most of the following stuff instead of `for` loops, but didn't have time to figure out how.
 ```{r}
-# (probably should use *apply for most of the following stuff instead of for loops)
 for (i in 1:length(tab)) {
 tab[[i]] <- tab[[i]][,-c(1,9,3,11)]
 }
 ```
 
-It would make more sense if the confidence intervals followed the estimate, and the q-value followed the p-value, so the columns have to be reordered (and renamed).
+It would make more sense if the confidence intervals followed the estimate, and if the *q*-value followed the *p*-value, so the columns have to be reordered (and renamed).
 ```{r}
 for (i in 1:length(tab)) {
+  # reorder
   tab[[i]] <- tab[[i]][c("estimate", "cilow","cihigh", "statistic",
                          "p.value", "q.value", "estimate.1", "cilow.1", 
                          "cihigh.1", "statistic.1", "p.value.1", "q.value.1")]
- 
+  # rename
   names(tab[[i]]) <-c("B", "95% CI LL", "95% CI UL", "t", "p", "q", 
                       "B", "95% CI LL", "95% CI UL", "t", "p", "q")
 }
 ```
 
-Since the 'term' columns that contained predictor names were removed, row names must be specified. Also, it's necessary to make room for some model statistics. A bunch of empty rows are inserted along with proper row names.
+Since the *term* columns that contained predictor names were removed earlier, row names must be specified. Also, it's necessary to make room for some model statistics. A bunch of empty rows are inserted along with proper row names.
 ```{r}
 for (i in 1:length(tab)) {
   # create empty row
@@ -409,7 +422,7 @@ for (i in 1:length(tab)) {
 
 ### Model statistics
 
-Now for model statistics, all of which are stored in a bunch of lists what were created earlier using `lapply`. Model statistics are to be stored in the *B* column, which is at indices ,1 (step 1) and ,7 (step 2). Since characters are not allowed in that column, a separate row is necessary for the p-values.
+Now for model statistics, all of which are stored in a bunch of lists what were created earlier using `lapply`. We must put the model statistics somewhere, so why not in the *B* column, which is at indices [,1] (step 1) and [,7] (step 2). A separate row is created for the *F* test *p*-values.
 ```{r}
 for (i in 1:length(tab)) {
   # step 1
@@ -433,9 +446,9 @@ for (i in 1:length(tab)) {
 }
 ```
 
-### Adding q-values
+### Adding *q*-values
 
-Again, q-values are added "manually". **Be vigilant**.
+Again, *q*-values are added manually. **Be careful, this is where you are most likely to mess up**.
 ```{r}
 # model 1
 tab[[1]][11,1] <- q[7]        # step 1 model 1 F q-value
@@ -467,7 +480,7 @@ tab[[5]][17,7] <- q[85]       # model 5 comparison q-value
 
 ## Regression models
 
-Flextable is used to create Word ready tables.
+Flextable is used to create Word ready tables. It took forever to find a decent way to export everything to Word, and I don't particularly like Word, but since the publishing process is what it is... There's still some tinkering that needs to be done manually in Word, such as removing NAs, page orientation, and other cosmetics. The main point is, you don't have to type in a single number by yourself.
 ```{r}
 # create empty list
 flextable <- NULL
@@ -481,7 +494,7 @@ for (i in 1:length(tab)) {
                          "SWMtotaler", "ADHD", "SUD", "F", "Fp", "Fq", "CV R2", "CI CV R2 LL",
                          "CI CV R2 UL", "Delta F", "Delta Fp", "Delta Fq", "Delta CV R2")
   
-  # reorder columns (again), so that rownames is first
+  # reorder columns so that 'rownames' is first
   col_idx <- grep("rownames", names(tab[[i]]))
   tab[[i]] <- tab[[i]][, c(col_idx, (1:ncol(tab[[i]]))[-col_idx])]
   
@@ -505,9 +518,8 @@ for (i in 1:length(tab)) {
 }
 ```
 
-All regression model results are written to five separate Word documents
+All regression model results are written to five separate Word documents. Could probaly loop this, but didn't have time to figure out how in a decent way.
 ```{r}
-# change into loop or something?
 doc <-  docx()
 doc <- addFlexTable(doc, flextable[[1]])
 writeDoc(doc, file = "results/Facet1.docx")
@@ -531,7 +543,7 @@ writeDoc(doc, file = "results/TotalScore.docx")
 
 ## Relative importance estimation
 
-The relative importance esimations are plotted and saved in a .tiff image.
+The relative importance esimations are plotted and saved in a .tiff image. See *relaimpo.R* for details.
 ```{r}
 source("scripts/relaimpo.R")
 
@@ -548,6 +560,7 @@ riplot <- plot_grid(
   step2riplots[[5]] + ggtitle("PCL-R Total score\nStep 2"),
   ncol=5, nrow=2, labels="AUTO")
 
+# save for publication
 ggsave(filename="figures/riplot.tiff", plot=riplot, height=8, width=14, dpi=300)
 
 ```
