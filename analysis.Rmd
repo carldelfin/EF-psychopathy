@@ -488,7 +488,9 @@ tab[[5]][17,7] <- q[85]       # model 5 comparison q-value
 
 ## Regression models
 
-Flextable is used to create Word ready tables. It took forever to find a decent way to export everything to Word, and I don't particularly like Word, but since the publishing process is what it is... There's still some tinkering that needs to be done manually in Word, such as removing NAs, page orientation, and other cosmetics. The main point is, you don't have to type in a single number by yourself.
+`FlexTable` is used to create Word ready tables. It took forever to find a decent way to export everything to Word, and I don't particularly like Word, but since the publishing process is what it is...
+
+There's still some tinkering that needs to be done manually in Word, such as removing NAs, page orientation, and other cosmetics. The main point is, you don't have to type in a single number by yourself.
 ```{r}
 # create empty list
 flextable <- NULL
@@ -575,7 +577,7 @@ ggsave(filename="figures/riplot.tiff", plot=riplot, height=8, width=14, dpi=300)
 
 # Session info
 
-A text file with the session info:
+Write a text file with the session info.
 ```{r}
 sessInfo <- capture.output(sessionInfo())
 write(sessInfo, file = "sessioninfo.txt")
@@ -583,7 +585,7 @@ write(sessInfo, file = "sessioninfo.txt")
 
 ## Clean environment
 
-Remove everything but the data. Not really necessary but I get anxious when the global environment is messy.
+Remove everything but the original data frame. Not really necessary but I get anxious when the global environment is messy.
 ```{r}
 keep(data, sure=TRUE)
 ```
