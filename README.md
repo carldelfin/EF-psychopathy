@@ -1,4 +1,4 @@
-## EF-psychopathy
+## Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disordersEF-psychopathy
 
 This GitHub repository contains all code used in the study *Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders*. The study is published in XXXX, DOI:XXXX.
 
