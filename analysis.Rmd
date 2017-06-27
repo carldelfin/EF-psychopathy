@@ -1,5 +1,5 @@
 ---
-title: "Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders"
+title: "Psychopathy and executive functions: The impact of attention deficit hyperactivity disorder and substance use disorders"
 author: "Carl Delfin"
 date: "28 April 2017"
 output:
@@ -13,7 +13,7 @@ output:
 
 # Introduction
 
-This is an RMarkdown document containing the R code used for all statistical analysis in the study *Predicting psychopathic traits in violent offenders: Executive functions and the impact of attention-deficit hyperactivity disorder and substance use disorders*.
+This is an RMarkdown document containing the R code used for all statistical analysis in the study *Psychopathy and executive functions: The impact of attention deficit hyperactivity disorder and substance use disorders*.
 
 In the document, `this` refers to a function within R, and  [this](https://en.wikipedia.org/wiki/Hyperlink) is a link to some external website.
 
@@ -23,14 +23,6 @@ In the document, `this` refers to a function within R, and  [this](https://en.wi
 
 ```{r}
 rm(list=ls())
-```
-
-## Functions
-
-Source functions for *k*-fold cross-validation and confidence interval estimation using heteroscedasticity consistent standard errors.
-```{r}
-source('scripts/kfoldcv.R')
-source('scripts/confintrobust.R')
 ```
 
 ## Load packages
@@ -58,9 +50,6 @@ Set working directory, read data, recalcuate one variable (from milliseconds to 
 ```{r, warning=FALSE}
 setwd("/Users/delfin/Dropbox/forskning/projekt/EF-psychopathy/")
 
-# if on Windows, uncomment and use this line instead
-# setwd("C:\\Users\\Lokaladm\\Dropbox\\forskning\\projekt\\EF-psychopathy\\")
-
 # read the data file
 data = read.spss("data/data_20170317_N237.sav", to.data.frame = TRUE)
 
@@ -69,6 +58,14 @@ data$SOCMITT5 <- data$SOCMITT5/1000
 
 # set seed
 seed = 2017
+```
+
+## Functions
+
+Source functions for *k*-fold cross-validation and confidence interval estimation using heteroscedasticity consistent standard errors.
+```{r}
+source('scripts/kfoldcv.R')
+source('scripts/confintrobust.R')
 ```
 
 # Descriptive overview of data
