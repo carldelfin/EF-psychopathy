@@ -1,5 +1,5 @@
-# create a dataframe using variables 18 and 4-14
-table1 <- data.frame(describe(data[c(18, 4:14)]))
+# create a dataframe using variables 18 and 4-8
+table1 <- data.frame(describe(data[c(18, 4:8)]))
 
 # remove columns we don't want, 
 # and only retain mean, SD, median, min and max
