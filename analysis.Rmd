@@ -39,8 +39,6 @@ library(lmtest)       # wald F test
 library(sandwich)     # heteroscedasticity-consistent standard errors
 library(car)          # variance inflation factors
 library(cowplot)      # 'plot_grid' function
-library(pwr)          # 'pwr.f2.test' function
-library(qvalue)       # FDR correction
 library(ReporteRs)    # 'FlexTable' function
 library(gdata)        # 'keep' function
 ```
@@ -48,6 +46,7 @@ library(gdata)        # 'keep' function
 ## Prepare data
 
 Set working directory, read data, recalcuate one variable (from milliseconds to seconds), and set seed (I use the year the analysis was conducted, in this case 2017). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
+
 ```{r, warning=FALSE}
 # set wd
 setwd("/Users/delfin/Dropbox/forskning/projekt/EF-psychopathy/")
@@ -65,6 +64,7 @@ seed = 2017
 ## Functions
 
 Source functions for *k*-fold cross-validation and confidence interval estimation using heteroscedasticity consistent standard errors.
+
 ```{r}
 source('scripts/kfoldcv.R')
 source('scripts/confintrobust.R')
@@ -75,6 +75,7 @@ source('scripts/confintrobust.R')
 ## Numerical variables
 
 Table 1 in the manuscript consists of an overview of numerical variables. Using `FlexTable`, a Word document with the table is created. See *table_1.R* for details.
+
 ```{r}
 source("scripts/table_1.R")
 
@@ -106,18 +107,19 @@ writeDoc(doc, file = "results/table1.docx")
 ## Categorical variables
 
 The ADHD and SUD variables are summarized in text, so the only output we need is a .txt with the correct numbers.
+
 ```{r}
 # create a data frame
-catdesc <- as.data.frame(summarise(group_by(data,SUD,ADHD),count=n()))
+catdesc <- as.data.frame(summarise(group_by(data, SUD, ADHD), count = n()))
 
 # capture the output of 'cat'
 catdesc <- capture.output(
-  cat("\nA total of", catdesc[1,3], "participants did not reach the criteria for either ADHD or SUD"),
-  cat("\nA total of", plyr::count(data$ADHD)[2,2], "participants reached the criteria for ADHD"),
-  cat("\nA total of", plyr::count(data$SUD)[2,2], "participants reached the criteria for SUD"),
-  cat("\nA total of", catdesc[2,3], "participants reached the criteria for ADHD but not for SUD"),
-  cat("\nA total of", catdesc[3,3], "participants reached the criteria for SUD but not for ADHD"),
-  cat("\nA total of", catdesc[4,3], "participants reached the criteria for both ADHD and SUD"))
+  cat("\nA total of", catdesc[1, 3], "participants did not reach the criteria for either ADHD or SUD"),
+  cat("\nA total of", plyr::count(data$ADHD)[2, 2], "participants reached the criteria for ADHD"),
+  cat("\nA total of", plyr::count(data$SUD)[2, 2], "participants reached the criteria for SUD"),
+  cat("\nA total of", catdesc[2, 3], "participants reached the criteria for ADHD but not for SUD"),
+  cat("\nA total of", catdesc[3, 3], "participants reached the criteria for SUD but not for ADHD"),
+  cat("\nA total of", catdesc[4, 3], "participants reached the criteria for both ADHD and SUD"))
 
 # save to file
 write(catdesc, file = "results/categoricaldescription.txt")
@@ -132,6 +134,7 @@ There are five outcomes (or dependent variables) and two steps, thus ten regress
 ## Model formulas
 
 Model formulas are also stored in lists.
+
 ```{r}
 # step 1 models
 step1formulas <- list(
@@ -166,31 +169,32 @@ Then for each model:
 6.  Calculate relative importance estimation
 
 ### Build step 1 models
+
 ```{r}
 step1models <- lapply(step1formulas,                                  # create list,
-                      function(x, data) eval(bquote(lm(.(x),data))),  # this line evaluates formulas in
-                      data=data)                                      # human readable format
+                      function(x, data) eval(bquote(lm(.(x), data))),  # this line evaluates formulas in
+                      data = data)                                      # human readable format
 
-step1cv <- lapply(step1models, kfoldcv, folds=5, runs=100, seed=seed) # k-fold CV
-step1wald <- lapply(step1models, waldtest, test="F", vcov=vcovHC)     # HC Wald F tests
-step1coefHC <- lapply(step1models, coeftest, vcov=vcovHC)             # HC t tests
+step1cv <- lapply(step1models, kfoldcv, folds = 5, runs = 100, seed = seed) # k-fold CV
+step1wald <- lapply(step1models, waldtest, test = "F", vcov = vcovHC)     # HC Wald F tests
+step1coefHC <- lapply(step1models, coeftest, vcov = vcovHC)             # HC t tests
 step1ci <- lapply(step1models, confint.robust)                        # HC CIs
 step1vif <- lapply(step1models, vif)                                  # VIFs
-step1ri <- lapply(step1models, calc.relimp, rela=T)                   # relative importance
+step1ri <- lapply(step1models, calc.relimp, rela = TRUE)                   # relative importance
 ```
 
 ### Build step 2 models
 ```{r}
 step2models <- lapply(step2formulas,                                  # same as above
-                      function(x, data) eval(bquote(lm(.(x),data))),
-                      data=data)
+                      function(x, data) eval(bquote(lm(.(x), data))),
+                      data = data)
 
-step2cv <- lapply(step2models, kfoldcv, folds=5, runs=100, seed=seed)
-step2wald <- lapply(step2models, waldtest, test="F", vcov=vcovHC)
-step2coefHC <- lapply(step2models, coeftest, vcov=vcovHC)
+step2cv <- lapply(step2models, kfoldcv, folds = 5, runs = 100, seed = seed)
+step2wald <- lapply(step2models, waldtest, test = "F", vcov = vcovHC)
+step2coefHC <- lapply(step2models, coeftest, vcov = vcovHC)
 step2ci <- lapply(step2models, confint.robust)
 step2vif <- lapply(step2models, vif)
-step2ri <- lapply(step2models, calc.relimp, rela=T)
+step2ri <- lapply(step2models, calc.relimp, rela = TRUE)
 ```
 
 ## Model comparison
@@ -199,7 +203,7 @@ Compare all step 1 and 2 models, again with Wald *F* using HC standard errors
 ```{r}
 waldmod <- NULL
 for (i in 1:5) {
- waldmod[[i]] <- waldtest(step1models[[i]], step2models[[i]], vcov=vcovHC)
+ waldmod[[i]] <- waldtest(step1models[[i]], step2models[[i]], vcov =vcovHC)
 }
 ```
 
@@ -210,6 +214,7 @@ for (i in 1:5) {
 The top row (panels A-E) shows to all step 1 models and the bottom row (panels F-J) shows all step 2 models.
 
 There are definite trends visible suggesting that the homoscedasticity assumption (i.e., constant variance of the residuals) of OLS may be violated, and thus inferences may be numerically unstable (although estimates are still unbiased). Transforming makes interpretation difficult, so instead, all inferences will be based on heteroscedasticity consistent standard errors using `vcovHC` [defaulting to the recommended type, HC3](http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/00TAS.pdf).
+
 ```{r}
 source("scripts/resfitplots.R")
 rfplots <- plot_grid(
@@ -223,10 +228,14 @@ rfplots <- plot_grid(
   step2resfitplots[[3]] + ggtitle("PCL-R Lifestyle facet\nStep 2"),
   step2resfitplots[[4]] + ggtitle("PCL-R Antisocial facet\nStep 2"),
   step2resfitplots[[5]] + ggtitle("PCL-R Total score\nStep 2"),
-  ncol=5, nrow=2, labels="AUTO")
+  ncol = 5, nrow = 2, labels = "AUTO")
 
 # save figure for supplementary material
-ggsave(filename="figures/rfplots.tiff", plot=rfplots, height=6, width=14, dpi=300)
+ggsave(filename = "figures/rfplots.tiff",
+       plot = rfplots,
+       height = 6,
+       width = 14,
+       dpi = 300)
 ```
 
 ## QQ plots
@@ -245,10 +254,14 @@ qqplots <- plot_grid(
   step2qqplots[[3]] + ggtitle("PCL-R Lifestyle facet\nStep 2"),
   step2qqplots[[4]] + ggtitle("PCL-R Antisocial facet\nStep 2"),
   step2qqplots[[5]] + ggtitle("PCL-R Total score\nStep 2"),
-  ncol=5, nrow=2, labels="AUTO")
+  ncol = 5, nrow = 2, labels = "AUTO")
 
 # save figure for supplementary material
-ggsave(filename="figures/qqplots.tiff", plot=qqplots, height=6, width=14, dpi=300)
+ggsave(filename = "figures/qqplots.tiff",
+       plot = qqplots,
+       height = 6,
+       width = 14,
+       dpi = 300)
 ```
 
 ## Variance inflation factors
@@ -286,43 +299,9 @@ dev.copy(png,"figures/pvaluehistogram.png")
 dev.off()
 ```
 
-Now, using the p vector, we can do FDR correction.
+Now, using the p vector, we can do FDR correction, resulting in adjusted p-values
 ```{r}
-fdrcorr <- qvalue(p)  # FDR correction
-q <- NULL
-q <- fdrcorr$qvalues  # store q-values in q vector
-```
-
-If one were to plot the p and q vectors against their respective indices, one would see that the *q*-values are "lifted" from the bottom and "pushed" from the top, i.e., fewer low and high *q*-values than *p*-values, which is the expected result. Going a bit further, we instead plot the p and q vectors together, but with different colors. We also plot arrows pointing to the direction of change, i.e. if the *q*-value is lower or higher than the corresponding *p*-value.
-```{r}
-# create data frames
-pp <- as.data.frame(p)
-qq <- as.data.frame(q)
-
-# add columns separating p and q
-pp$var <- rep("p", length(pp))
-qq$var <- rep("q", length(qq))
-
-# rename
-names(pp) <- c("val", "var")
-names(qq) <- c("val", "var")
-
-# bind
-ppqq <- rbind(pp, qq)
-
-# create dummy sequence
-ppqq$seq <- rep(1:85)
-
-# plot
-ppqqplot <- ggplot(ppqq, aes(x=seq, y=val, col=var)) + 
-  geom_point(alpha=0.9, size=1) +
-  geom_line(arrow = arrow(length = unit(0.2,"cm"), type="open", ends="last"),
-            aes(group=seq), col="gray", alpha=1, size=0.5) +
-  scale_y_continuous(name="Value") +
-  scale_x_continuous(name="")
-
-# save for supplementary material
-ggsave(filename="figures/ppqqplot.tiff", plot=ppqqplot, height=6, width=10, dpi=300)
+padj <- p.adjust(p, method = "fdr")
 ```
 
 # Preparing results
@@ -352,25 +331,25 @@ for (i in 1:length(tidys2)) {                 # tidys2
 }
 ```
 
-## Adding coefficient *q*-values
+## Adding adjusted *p*-values
 
-To add the coefficient *q*-values, we'll have to go the manual way (probably could have been done programatically if I were a better coder...).
+To add the adjusted *p*-values, we'll have to go the manual way (probably could have been done programatically if I were a better coder...).
 
 In any case, it's just a matter of selecting the correct indices of the q vector, **but make sure they are indeed the correct ones**.
 ```{r}
 # tidys1, i.e. step 1 models
-tidys1[[1]]$q.value <- q[1:6]     # six Interpersonal facet coefficient q-values
-tidys1[[2]]$q.value <- q[18:23]   # six Affective facet coefficient q-values
-tidys1[[3]]$q.value <- q[35:40]   # six Lifestyle facet coefficient q-values
-tidys1[[4]]$q.value <- q[52:57]   # six Antisocial facet coefficient q-values
-tidys1[[5]]$q.value <- q[69:74]   # six Total score coefficient q-values
+tidys1[[1]]$p.adj <- padj[1:6]     # six Interpersonal facet coefficient q-values
+tidys1[[2]]$p.adj <- padj[18:23]   # six Affective facet coefficient q-values
+tidys1[[3]]$p.adj <- padj[35:40]   # six Lifestyle facet coefficient q-values
+tidys1[[4]]$p.adj <- padj[52:57]   # six Antisocial facet coefficient q-values
+tidys1[[5]]$p.adj <- padj[69:74]   # six Total score coefficient q-values
 
 # tidys2, i.e. step 2 models
-tidys2[[1]]$q.value.1 <- q[8:15]  # same procedure as above,
-tidys2[[2]]$q.value.1 <- q[25:32] # but now with 8 q-values,
-tidys2[[3]]$q.value.1 <- q[42:49] # since there are 8 predictors in step 2
-tidys2[[4]]$q.value.1 <- q[59:66]
-tidys2[[5]]$q.value.1 <- q[76:83]
+tidys2[[1]]$p.adj.1 <- padj[8:15]  # same procedure as above,
+tidys2[[2]]$p.adj.1 <- padj[25:32] # but now with 8 q-values,
+tidys2[[3]]$p.adj.1 <- padj[42:49] # since there are 8 predictors in step 2
+tidys2[[4]]$p.adj.1 <- padj[59:66]
+tidys2[[5]]$p.adj.1 <- padj[76:83]
 ```
 
 ## Prepare results
@@ -400,11 +379,11 @@ It would make more sense if the confidence intervals followed the estimate, and 
 for (i in 1:length(tab)) {
   # reorder
   tab[[i]] <- tab[[i]][c("estimate", "cilow","cihigh", "statistic",
-                         "p.value", "q.value", "estimate.1", "cilow.1", 
-                         "cihigh.1", "statistic.1", "p.value.1", "q.value.1")]
+                         "p.value", "p.adj", "estimate.1", "cilow.1", 
+                         "cihigh.1", "statistic.1", "p.value.1", "p.adj.1")]
   # rename
-  names(tab[[i]]) <-c("B", "95% CI LL", "95% CI UL", "t", "p", "q", 
-                      "B", "95% CI LL", "95% CI UL", "t", "p", "q")
+  names(tab[[i]]) <-c("B", "95% CI LL", "95% CI UL", "t", "p", "padj", 
+                      "B", "95% CI LL", "95% CI UL", "t", "p", "padj")
 }
 ```
 
@@ -420,9 +399,9 @@ for (i in 1:length(tab)) {
   # add row names (perhaps redudant, see later sections with FlexTable)
   row.names(tab[[i]]) <- c("SOCMITT5", "SOCPS", "IEDstages",
                            "IEDstageser", "SWMstrategy", "SWMtotaler",
-                           "ADHD", "SUD","F", "Fp", "Fq",
+                           "ADHD", "SUD","F", "Fp", "Fpadj",
                            "CV R2", "CI CV R2 LL", "CI CV R2 UL",
-                           "Delta F", "Delta Fp", "Delta Fq", "Delta CV R2")
+                           "Delta F", "Delta Fp", "Delta Fpadj", "Delta CV R2")
 }
 ```
 
@@ -457,29 +436,29 @@ for (i in 1:length(tab)) {
 Again, *q*-values are added manually. **Be careful, this is where you are most likely to mess up**.
 ```{r}
 # model 1
-tab[[1]][11,1] <- q[7]        # step 1 model 1 F q-value
-tab[[1]][11,7] <- q[16]       # step 2 model 1 F q-value
-tab[[1]][17,7] <- q[17]       # model 1 comparison q-value
+tab[[1]][11,1] <- padj[7]        # step 1 model 1 F q-value
+tab[[1]][11,7] <- padj[16]       # step 2 model 1 F q-value
+tab[[1]][17,7] <- padj[17]       # model 1 comparison q-value
 
 # model 2
-tab[[2]][11,1] <- q[24]       # step 1 model 2 F q-value
-tab[[2]][11,7] <- q[33]       # step 2 model 2 F q-value
-tab[[2]][17,7] <- q[34]       # model 2 comparison q-value
+tab[[2]][11,1] <- padj[24]       # step 1 model 2 F q-value
+tab[[2]][11,7] <- padj[33]       # step 2 model 2 F q-value
+tab[[2]][17,7] <- padj[34]       # model 2 comparison q-value
 
 # model 3
-tab[[3]][11,1] <- q[41]       # step 1 model 3 F q-value
-tab[[3]][11,7] <- q[50]       # step 2 model 3 F q-value
-tab[[3]][17,7] <- q[51]       # model 3 comparison q-value
+tab[[3]][11,1] <- padj[41]       # step 1 model 3 F q-value
+tab[[3]][11,7] <- padj[50]       # step 2 model 3 F q-value
+tab[[3]][17,7] <- padj[51]       # model 3 comparison q-value
 
 # model 4
-tab[[4]][11,1] <- q[58]       # step 1 model 4 F q-value
-tab[[4]][11,7] <- q[67]       # step 2 model 4 F q-value
-tab[[4]][17,7] <- q[68]       # model 4 comparison q-value
+tab[[4]][11,1] <- padj[58]       # step 1 model 4 F q-value
+tab[[4]][11,7] <- padj[67]       # step 2 model 4 F q-value
+tab[[4]][17,7] <- padj[68]       # model 4 comparison q-value
 
 # model 5
-tab[[5]][11,1] <- q[75]       # step 1 model 5 F q-value
-tab[[5]][11,7] <- q[84]       # step 2 model 5 F q-value
-tab[[5]][17,7] <- q[85]       # model 5 comparison q-value
+tab[[5]][11,1] <- padj[75]       # step 1 model 5 F q-value
+tab[[5]][11,7] <- padj[84]       # step 2 model 5 F q-value
+tab[[5]][17,7] <- padj[85]       # model 5 comparison q-value
 ```
 
 # Final results
@@ -501,8 +480,8 @@ for (i in 1:length(tab)) {
   
   # FlexTable won't allow to use rownames, so we need to create 'fake' rownames in the form of a column
   tab[[i]]$rownames <- c("SOCMITT5", "SOCPS", "IEDstages", "IEDstageser", "SWMstrategy",
-                         "SWMtotaler", "ADHD", "SUD", "F", "Fp", "Fq", "CV R2", "CI CV R2 LL",
-                         "CI CV R2 UL", "Delta F", "Delta Fp", "Delta Fq", "Delta CV R2")
+                         "SWMtotaler", "ADHD", "SUD", "F", "Fp", "Fpadj", "CV R2", "CI CV R2 LL",
+                         "CI CV R2 UL", "Delta F", "Delta Fp", "Delta Fpadj", "Delta CV R2")
   
   # reorder columns so that 'rownames' is first
   col_idx <- grep("rownames", names(tab[[i]]))
@@ -518,8 +497,8 @@ for (i in 1:length(tab)) {
   flextable[[i]] = addHeaderRow(flextable[[i]], text.properties = textBold(),
                          value = c("", "Step 1", "Step 2"), colspan = c(1,6,6))
   
-  flextable[[i]] = addHeaderRow(flextable[[i]], value = c("", "B", "95% LL", "95% UL", "t", "p", "q",
-                                                              "B", "95% LL", "95% UL", "t", "p", "q"),
+  flextable[[i]] = addHeaderRow(flextable[[i]], value = c("", "B", "95% LL", "95% UL", "t", "p", "padj",
+                                                              "B", "95% LL", "95% UL", "t", "p", "padj"),
   text.properties = textBold())
   
   # align columns (somewhat) correctly
@@ -528,7 +507,7 @@ for (i in 1:length(tab)) {
 }
 ```
 
-All regression model results are written to five separate Word documents. Could probaly loop this, but didn't have time to figure out how in a decent way.
+All regression model results are written to five separate Word documents. Could probaly loop this, but oh well.
 ```{r}
 doc <-  docx()
 doc <- addFlexTable(doc, flextable[[1]])
