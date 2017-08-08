@@ -175,8 +175,8 @@ Then for each model:
 ### Build step 1 models
 
 ```{r}
-# create list,
-# evaluate formulas in uman readable format
+# create list
+# evaluate formulas in human readable format
 step1models <- lapply(step1formulas,
                       function(x, data) eval(bquote(lm(.(x), data))),  
                       data = data)
