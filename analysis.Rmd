@@ -683,8 +683,8 @@ riplot <- plot_grid(
   step2riplots[[5]] + ggtitle("PCL-R Total score\nStep 2"),
   ncol = 5, nrow = 2, labels = "AUTO")
 
-# save for publication
-ggsave(filename = "figures/riplot.tiff",
+# save for publication (in PDF)
+ggsave(filename = "figures/riplot.pdf",
        plot = riplot,
        height = 8,
        width = 14,
