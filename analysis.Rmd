@@ -46,12 +46,9 @@ library(gdata)        # 'keep' function
 
 ## Prepare data
 
-Set working directory, read data, recalcuate one variable (from milliseconds to seconds), and set seed (I use the year the analysis was conducted, in this case 2017). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
+Read data, recalcuate one variable (from milliseconds to seconds), and set seed (I use the year the analysis was conducted, in this case 2017). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
 
 ```{r, warning=FALSE}
-# set wd
-setwd("/Users/delfin/Dropbox/forskning/projekt/EF-psychopathy/")
-
 # read the data file
 data = read.spss("data/data_20170317_N237.sav", to.data.frame = TRUE)
 
