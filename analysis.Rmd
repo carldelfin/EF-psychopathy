@@ -3,17 +3,14 @@ title: "Psychopathy and executive functions: The impact of attention deficit hyp
 author: "Carl Delfin"
 date: "4 July 2017"
 output:
-  html_document:
-    theme: simplex
-    highlight: pygments
-    toc: true
-    toc_depth: 3
-    number_sections: true
+  pdf_document: default
+  html_document: default
+  word_document: default
 ---
 
 # Introduction
 
-This is an RMarkdown document containing the R code used for all statistical analysis in the study *Psychopathy and executive functions: The impact of attention deficit hyperactivity disorder and substance use disorders*.
+This is an RMarkdown document containing the R code used for all statistical analysis in the study *Psychopathic traits and executive functions*.
 
 In the document, `this` refers to a function within R, and  [this](https://en.wikipedia.org/wiki/Hyperlink) is a link to some external website.
 
@@ -28,6 +25,7 @@ rm(list=ls())
 ## Load packages
 
 ```{r, message=FALSE, warning=TRUE}
+library(doMC)         # 'registerDoMC' function
 library(foreign)      # 'read.spss' function
 library(psych)        # required for 'describe' function in table_1.R
 library(Rmisc)        # required for 'CI' function in kfoldcv.R
@@ -37,11 +35,18 @@ library(ggplot2)      # pretty graphics
 library(broom)        # 'tidy' function
 library(relaimpo)     # relative importance estimation
 library(lmtest)       # wald F test
+library(caret)        # cross validation
 library(sandwich)     # heteroscedasticity-consistent standard errors
 library(car)          # variance inflation factors
 library(cowplot)      # 'plot_grid' function
 library(ReporteRs)    # 'FlexTable' function
 library(gdata)        # 'keep' function
+```
+
+## Prepare parallel processing
+
+```{r}
+registerDoMC(cores = 2)
 ```
 
 ## Prepare data
@@ -50,21 +55,97 @@ Read data, recalcuate one variable (from milliseconds to seconds), and set seed 
 
 ```{r, warning=FALSE}
 # read the data file
-data = read.spss("data/data_20170317_N237.sav", to.data.frame = TRUE)
+data = read.spss("data/data_20171031.sav", to.data.frame = TRUE)
 
-# recode variable to seconds
 data$SOCMITT5 <- data$SOCMITT5 / 1000
 
 # set seed
 seed <- 2017
 ```
 
-## Functions
+# Data preparation
 
-Source functions for *k*-fold cross-validation and confidence interval estimation using heteroscedasticity consistent standard errors.
+## Select predictors
+
+Define the outcome variable and which predictors to use. The names must, obviously, match variable names in the data frame.
 
 ```{r}
-source('scripts/kfoldcv.R')
+# other variables (age)
+otherList <- "age"
+
+# outcome
+outcomeVariables <- c("totalscore", "facet1", "facet2", "facet3", "facet4")
+
+# EF predictors
+predictorList <- c("SOCMITT5","SOCPS","IEDstages", "IEDtotaler", "SWMstrategy", "SWMtotaler", "SSTSSRT", "SSTSSD50")
+```
+
+### Subset data
+
+Subset the data to remove unecessary variables.
+
+```{r}
+# select only columns that match the variable names in our lists
+idx <- match(c(otherList, outcomeVariables, predictorList), names(data))
+
+# subset
+data <- data[, idx] 
+
+# remove idx from environment
+remove(idx)
+```
+
+## Missing data
+
+Look for missing data in the list of predictors and note how many rows (if any) contain missing values. Save that in a text file.
+
+```{r}
+# look for NAs in the predictor variables
+missing <- describe(data[c(otherList, predictorList, outcomeVariables)])
+missingNames <- row.names(missing)
+tempMissing <- NULL
+
+# loop through list of predictor variables and save to temporary vector
+for (i in 1:length(missingNames)) {
+  tempMissing <- append(tempMissing,
+                        paste("There is/are",
+                              nrow(data)-missing[i,2], 
+                              "row/s missing in the", 
+                              missingNames[i],
+                              "variable"))
+}
+
+# capture output
+results_missing <- capture.output(tempMissing)
+
+# save output file to to .txt
+write(results_missing, file = "results/results_missing.txt")
+
+# remove from environment
+remove(i, missing, missingNames, tempMissing, results_missing)
+```
+
+## Drop missing data
+
+Drop missing rows
+
+```{r}
+data <- na.omit(data)
+```
+
+## Data preparation
+
+
+
+
+Sixteen subjects failed to achieve convergence, either through too high (≤60%) or too low (≤40%) levels of successful inhibition. These staircase failures may arise through strategic slowing of the go reaction time, or through inconsistent performance or excessive distraction. They invalidate an assumption of the horse race model that Go-and stop-related processes are independent [11]. Thus, the final group for analysis was a total of 141 participants (94 females, 47 males).
+
+
+## Functions
+
+Source function for confidence interval estimation using heteroscedasticity consistent standard errors.
+
+```{r}
 source('scripts/confintrobust.R')
 ```
 
@@ -75,92 +156,44 @@ source('scripts/confintrobust.R')
 Table 1 in the manuscript consists of an overview of numerical variables. Using `FlexTable`, a Word document with the table is created. See *table_1.R* for details.
 
 ```{r}
-source("scripts/table_1.R")
+# describe data
+table1 <- data.frame(describe(data))
 
-# round numbers to two decimal points
-table1 <- round(table1, 2)
+# remove columns we don't want, round to two decimal points
+table1 <- round(table1[, c(3:4, 8:9)], 2)
 
-# add rownames column (FlexTable makes using row names difficult, so this is a workaround)
-table1$rownames <- c("Age", "PCL-R Facet 1",
-                     "PCL-R Facet 2", "PCL-R Facet 3",
-                     "PCL-R Facet 4", "PCL-R Total Score")
+# create flextable
+table1 <- FlexTable(table1,
+                    header.text.props = textProperties(font.size = 10),
+                    body.text.props = textProperties(font.size = 10),
+                    add.rownames = TRUE)
 
-# reorder columns
-table1 <- table1[, c("rownames", "Mean", "SD", "Median", "Min", "Max")]
-
-# create FlexTable
-table1 <- FlexTable(table1, header.columns = FALSE,
-                    header.text.props = textProperties(font.size = 10,
-                                                       font.weight = "bold"),
-                    body.text.props = textProperties(font.size = 10))
-
-# add header
-table1 <-  addHeaderRow(table1,
-                        value = c("", "Mean", "SD", "Median", "Min", "Max"),
-                        text.properties = textBold())
-
-# write to .docx
+## write to .docx
 doc <- docx()
 doc <- addFlexTable(doc, table1)
 writeDoc(doc, file = "results/table1.docx")
-```
 
-## Categorical variables
-
-The ADHD and SUD variables are summarized in text, so the only output we need is a .txt with the correct numbers.
-
-```{r}
-# create a data frame
-catdesc <- as.data.frame(summarise(group_by(data, SUD, ADHD), count = n()))
-
-# capture the output of 'cat'
-catdesc <- capture.output(
-  cat("\nA total of", catdesc[1, 3], "participants did not reach the criteria for either ADHD or SUD"),
-  cat("\nA total of", plyr::count(data$ADHD)[2, 2], "participants reached the criteria for ADHD"),
-  cat("\nA total of", plyr::count(data$SUD)[2, 2], "participants reached the criteria for SUD"),
-  cat("\nA total of", catdesc[2, 3], "participants reached the criteria for ADHD but not for SUD"),
-  cat("\nA total of", catdesc[3, 3], "participants reached the criteria for SUD but not for ADHD"),
-  cat("\nA total of", catdesc[4, 3], "participants reached the criteria for both ADHD and SUD"))
-
-# save to file
-write(catdesc, file = "results/categoricaldescription.txt")
+# keep workspace clean
+remove(doc, table1)
 ```
 
 # Regression models
-
-We (1) want to investigate how well PCL-R scores (i.e., psychopathic traits) are predicted from a set of executive function (EF) measures and then (2) assess the impact of ADHD and SUD on these predictions. To do so, the regression models are built in two steps, with step 1 using EF predictors only and step 2 using EF + ADHD & SUD predictors. This procedure is called *hierarchical regression* in most psychology contexts, which is **not** to be confused with [multilevel modeling](https://en.wikipedia.org/wiki/Multilevel_model), sometimes also called hierarchical linear regression or hierarchical linear modeling. 
-
-There are five outcomes (or dependent variables) and two steps, thus ten regression models in total. All models in each step are stored within a list, so that we can use `lapply` to do stuff to all models at once. The formulas in must be human readable for `lapply` to work properly, hence the pre-specification of model formulas.
 
 ## Model formulas
 
 Model formulas are also stored in lists.
 
 ```{r}
-# step 1 models
-step1formulas <- list(
-  Facet1 ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler,
-  Facet2 ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler,
-  Facet3 ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler,
-  Facet4 ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler,
-  TotalScore ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler)
+formulas <- as.list(NULL)
 
-# step 2 models
-step2formulas <- list(
-  Facet1 ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler + ADHD + SUD,
-  Facet2 ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler + ADHD + SUD,
-  Facet3 ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler + ADHD + SUD,
-  Facet4 ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler + ADHD + SUD,
-  TotalScore ~ SOCMITT5 + SOCPS + IEDstages + IEDstageser + SWMstrategy + SWMtotaler + ADHD + SUD)
+for (i in 1:length(outcomeVariables)) {
+  formulas[[i]] <- paste(outcomeVariables[[i]], paste(predictorList, collapse = "+"), sep = "~")
+}
 ```
 
-## Model building
+Model building
 
-The model building process goes like this:
-
-1.  Create lists of regression models (contained in *step1models* and *step2models*)
-
-Then for each model:
+For each model:
 
 2.  Do *k*-fold cross-validaton
 3.  Calculate model *F* using `waldtest` with [heteroscedasticity consistent (HC) standard errors](https://en.wikipedia.org/wiki/Heteroscedasticity-consistent_standard_errors)
@@ -171,57 +204,77 @@ Then for each model:
 
 ### Build step 1 models
 
-```{r}
-# create list
-# evaluate formulas in human readable format
-step1models <- lapply(step1formulas,
-                      function(x, data) eval(bquote(lm(.(x), data))),  
-                      data = data)
-
-# k-fold CV
-step1cv <- lapply(step1models, kfoldcv, folds = 5, runs = 100, seed = seed)
-
-# HC Wald F tests
-step1wald <- lapply(step1models, waldtest, test = "F", vcov = vcovHC)
-
-# HC t tests
-step1coefHC <- lapply(step1models, coeftest, vcov = vcovHC)
-
-# HC CIs
-step1ci <- lapply(step1models, confint.robust)
-
-# VIFs
-step1vif <- lapply(step1models, vif)
-
-# relative importance
-step1ri <- lapply(step1models, calc.relimp, rela = TRUE)
-```
-
-### Build step 2 models
-
-Same as above.
 
 ```{r}
-step2models <- lapply(step2formulas,
-                      function(x, data) eval(bquote(lm(.(x), data))),
-                      data = data)
-step2cv <- lapply(step2models, kfoldcv, folds = 5, runs = 100, seed = seed)
-step2wald <- lapply(step2models, waldtest, test = "F", vcov = vcovHC)
-step2coefHC <- lapply(step2models, coeftest, vcov = vcovHC)
-step2ci <- lapply(step2models, confint.robust)
-step2vif <- lapply(step2models, vif)
-step2ri <- lapply(step2models, calc.relimp, rela = TRUE)
-```
+# estimate linear models
+modelList <- lapply(formulas, function(x, data) eval(bquote(lm(.(x), data))), data = data)
 
-## Model comparison
+# lapply through all models
+modelWald <- lapply(modelList, waldtest, test = "F", vcov = vcovHC)
+modelHC   <- lapply(modelList, coeftest, vcov = vcovHC)
+modelCI   <- lapply(modelList, confint.robust)
+modelVIF  <- lapply(modelList, vif)
+modelRI   <- lapply(modelList, calc.relimp, type = "lmg", rela = FALSE)
+modelCV   <- NULL
 
-Compare all step 1 and 2 models, again with Wald *F* using HC standard errors.
+# specify repeated 10-fold CV repeated 100 times
+control = trainControl(method = "repeatedcv", number = 10, repeats = 10)
 
-```{r}
-waldmod <- NULL
-for (i in 1:5) {
- waldmod[[i]] <- waldtest(step1models[[i]], step2models[[i]], vcov = vcovHC)
+# loop CV through all outcome variables 
+for (i in 1:length(formulas)) {
+  modelCV[[i]] <- train(as.formula(formulas[[i]]), data = data, method = "lm", trControl = control)
 }
+
+remove(formulas, control, i)
+```
+
+## Table 2
+
+```{r}
+source("scripts/table2.R")
+  
+# save table in Word doc
+doc <- docx()
+doc <- addFlexTable(doc, table2)
+writeDoc(doc, file = "results/table2.docx")
+remove(doc, table2, modelHC, modelCI)
+```
+
+## Model statistics
+
+```{r}
+source("scripts/regressionsummary.R")
+
+# write to .txt
+lapply(regressionsummary, write, "results/results.txt", append = TRUE)
+
+# remove from environment
+#remove(regressionsummary, modelWald, modelCV)
+```
+
+# Relative importance estimation
+
+The relative importance esimations are plotted and saved in a .tiff image. See *relaimpo.R* for details.
+
+```{r}
+source("scripts/relaimpo.R")
+
+riplot <- plot_grid(
+  riplots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
+  riplots[[2]] + ggtitle("PCL-R Affective facet"), 
+  riplots[[3]] + ggtitle("PCL-R Lifestyle facet"),
+  riplots[[4]] + ggtitle("PCL-R Antisocial facet"),
+  riplots[[5]] + ggtitle("PCL-R Total score"),
+  ncol = 5, nrow = 1, labels = "AUTO")
+
+# save for publication (in PDF)
+ggsave(filename = "figures/riplot.pdf",
+       plot = riplot,
+       height = 8,
+       width = 14,
+       dpi = 300)
+
+remove(modelRI, riplot, riplots)
 ```
 
 # Regression diagnostics
@@ -235,24 +288,21 @@ There are definite trends visible suggesting that the homoscedasticity assumptio
 ```{r}
 source("scripts/resfitplots.R")
 rfplots <- plot_grid(
-  step1resfitplots[[1]] + ggtitle("PCL-R Interpersonal facet\nStep 1"), 
-  step1resfitplots[[2]] + ggtitle("PCL-R Affective facet\nStep 1"), 
-  step1resfitplots[[3]] + ggtitle("PCL-R Lifestyle facet\nStep 1"),
-  step1resfitplots[[4]] + ggtitle("PCL-R Antisocial facet\nStep 1"),
-  step1resfitplots[[5]] + ggtitle("PCL-R Total score\nStep 1"),
-  step2resfitplots[[1]] + ggtitle("PCL-R Interpersonal facet\nStep 2"),
-  step2resfitplots[[2]] + ggtitle("PCL-R Affective facet\nStep 2"),
-  step2resfitplots[[3]] + ggtitle("PCL-R Lifestyle facet\nStep 2"),
-  step2resfitplots[[4]] + ggtitle("PCL-R Antisocial facet\nStep 2"),
-  step2resfitplots[[5]] + ggtitle("PCL-R Total score\nStep 2"),
-  ncol = 5, nrow = 2, labels = "AUTO")
+  resfitPlots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
+  resfitPlots[[2]] + ggtitle("PCL-R Affective facet"), 
+  resfitPlots[[3]] + ggtitle("PCL-R Lifestyle facet"),
+  resfitPlots[[4]] + ggtitle("PCL-R Antisocial facet"),
+  resfitPlots[[5]] + ggtitle("PCL-R Total score"),
+  ncol = 5, nrow = 1, labels = "AUTO")
 
 # save figure for supplementary material
 ggsave(filename = "figures/rfplots.tiff",
        plot = rfplots,
-       height = 6,
+       height = 3,
        width = 14,
        dpi = 300)
+
+remove(rfplot, resfitplots, rfplots)
 ```
 
 ## QQ plots
@@ -262,434 +312,34 @@ QQ plots are used to look at the distribution of residuals. Apart from PCL-R Int
 ```{r}
 source("scripts/qqplots.R")
 qqplots <- plot_grid(
-  step1qqplots[[1]] + ggtitle("PCL-R Interpersonal facet\nStep 1"), 
-  step1qqplots[[2]] + ggtitle("PCL-R Affective facet\nStep 1"), 
-  step1qqplots[[3]] + ggtitle("PCL-R Lifestyle facet\nStep 1"),
-  step1qqplots[[4]] + ggtitle("PCL-R Antisocial facet\nStep 1"),
-  step1qqplots[[5]] + ggtitle("PCL-R Total score\nStep 1"),
-  step2qqplots[[1]] + ggtitle("PCL-R Interpersonal facet\nStep 2"),
-  step2qqplots[[2]] + ggtitle("PCL-R Affective facet\nStep 2"),
-  step2qqplots[[3]] + ggtitle("PCL-R Lifestyle facet\nStep 2"),
-  step2qqplots[[4]] + ggtitle("PCL-R Antisocial facet\nStep 2"),
-  step2qqplots[[5]] + ggtitle("PCL-R Total score\nStep 2"),
-  ncol = 5, nrow = 2, labels = "AUTO")
+  qqPlots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
+  qqPlots[[2]] + ggtitle("PCL-R Affective facet"), 
+  qqPlots[[3]] + ggtitle("PCL-R Lifestyle facet"),
+  qqPlots[[4]] + ggtitle("PCL-R Antisocial facet"),
+  qqPlots[[5]] + ggtitle("PCL-R Total score"),
+  ncol = 5, nrow = 1, labels = "AUTO")
 
 # save figure for supplementary material
 ggsave(filename = "figures/qqplots.tiff",
        plot = qqplots,
-       height = 6,
+       height = 3,
        width = 14,
        dpi = 300)
+
+remove(qqPlots, qqplots)
 ```
 
 ## Variance inflation factors
 
 Collinearity is assessed by looking at variance inflation factors (VIFs). VIFs are presented in text, so we only want a .txt with the output.
 ```{r}
-# bind step 1 and step 2 lists
-vifs <- rbind(step1vif, step2vif)
-
 # print and save range of VIFs
-vifs <- capture.output(cat("The VIFs range from", range(vifs)[1], "to", range(vifs)[2]))
+vifs <- capture.output(cat("The VIFs range from", range(modelVIF)[1], "to", range(modelVIF)[2]))
 
 # save to .txt
 write(vifs, file = "results/vifs.txt")
-```
 
-# False discovery rate correction
-
-Before we do FDR correction, all *p*-values must be stored in a single vector. It's important to keep track of which *p*-value corresponds to which test, otherwise things will get messy when assigning the corresponding q-value later on. **This is crucial! Make sure you understand the order or the p vector**.
-
-```{r}
-p <- NULL
-for (i in 1:5) {
-  p <- append(p, unname(step1coefHC[[i]][-1,4])) # six coefficient p-values 
-  p <- append(p, step1wald[[i]]$`Pr(>F)`[2])     # one model F p-value
-  p <- append(p, unname(step2coefHC[[i]][-1,4])) # eight coefficient p-values
-  p <- append(p, step2wald[[i]]$`Pr(>F)`[2])     # one model F p-value
-  p <- append(p, waldmod[[i]]$`Pr(>F)`[2])       # one model change F p-value
-}                                                # i.e, each model has 17 p-values
-```
-
-The p vector must have a long right tail, otherwise FDR correction will not work properly. A histogram of the p vector is saved for supplementary material.
-
-```{r}
-hist(p)
-dev.copy(png,"figures/pvaluehistogram.png")
-dev.off()
-```
-
-Now, using the p vector, we can do FDR correction resulting in adjusted p-values.
-
-```{r}
-padj <- p.adjust(p, method = "fdr")
-```
-
-# Preparing results
-
-## `tidy` objects
-
-First we create `tidy` objects for step 1 and step 2 models with HC standard errors.
-
-```{r}
-tidys1 <- lapply(step1coefHC, tidy) # tidy object for step 1 models
-tidys2 <- lapply(step2coefHC, tidy) # tidy object for step 2 models
-```
-
-## Intercept and confidence intervals
-
-The intercept is removed (the intercept was included when the regression models were estimated, but since its interpretation is fairly meaningless, it is removed from the output, allowing us to cut down on reported *p*-values). Also, HC confidence intervals for predictors are added.
-
-```{r}
-for (i in 1:length(tidys1)) {                 # tidys1
-  tidys1[[i]] <- tidys1[[i]][-1,]             # remove intercept 
-  tidys1[[i]]$cilow <- step1ci[[i]][-1,1]     # LL CI
-  tidys1[[i]]$cihigh <- step1ci[[i]][-1,2]    # UL CI
-}
-
-for (i in 1:length(tidys2)) {                 # tidys2
-  tidys2[[i]] <- tidys2[[i]][-1,]             # remove intercept
-  tidys2[[i]]$cilow <- step2ci[[i]][-1,1]     # LL CI
-  tidys2[[i]]$cihigh <- step2ci[[i]][-1,2]    # UL CI
-}
-```
-
-## Adding adjusted *p*-values
-
-To add the adjusted *p*-values, we'll have to go the manual way (probably could have been done programatically if I were a better coder...).
-
-In any case, it's just a matter of selecting the correct indices of the padj vector, **but make sure they are indeed the correct ones**.
-
-```{r}
-# tidys1, i.e. step 1 models
-tidys1[[1]]$p.adj <- padj[1:6]     # six Interpersonal facet coefficient p-values
-tidys1[[2]]$p.adj <- padj[18:23]   # six Affective facet coefficient p-values
-tidys1[[3]]$p.adj <- padj[35:40]   # six Lifestyle facet coefficient p-values
-tidys1[[4]]$p.adj <- padj[52:57]   # six Antisocial facet coefficient p-values
-tidys1[[5]]$p.adj <- padj[69:74]   # six Total score coefficient p-values
-
-# tidys2, i.e. step 2 models
-tidys2[[1]]$p.adj.1 <- padj[8:15]  # same procedure as above,
-tidys2[[2]]$p.adj.1 <- padj[25:32] # but now with 8 p-values,
-tidys2[[3]]$p.adj.1 <- padj[42:49] # since there are 8 predictors in step 2
-tidys2[[4]]$p.adj.1 <- padj[59:66]
-tidys2[[5]]$p.adj.1 <- padj[76:83]
-```
-
-# Prepare results
-
-## A list of tables
-
-We add rows for ADHD and SUD, then merge *tidys1* and *tidys2* into *tab*.
-
-```{r}
-for (i in 1:length(tidys1)) {
-  x <- rep(NA, ncol(tidys1[[i]]))
-  tidys1[[i]] <- rbind(tidys1[[i]], x, x)
-}
-
-# merge using mapply and cbind
-tab <- mapply(cbind, tidys1, tidys2, SIMPLIFY = FALSE)
-```
-
-Now that we havelist of data frames (*tab*), there's some cleaning up to do. The HC standard error, row names, unadjusted *p*-values and *t*-values are removed, since they will not be presented in the manuscript. Additionally, all numbers are rounded to three decimal points and a new column is created, containing both ends of the confidence interval (the separate ones are removed).
-
-```{r}
-for (i in 1:length(tab)) {
-tab[[i]] <- tab[[i]][,-c(1, 3, 4, 5, 9, 11, 12, 13)]
-tab[[i]] <- round(tab[[i]], 3)
-tab[[i]] <- transform(tab[[i]], ci = paste(cilow, cihigh, sep=", "))
-tab[[i]] <- transform(tab[[i]], ci.1 = paste(cilow.1, cihigh.1, sep=", "))
-tab[[i]] <- tab[[i]][,-c(2, 3, 6, 7)]
-}
-```
-
-Columns are reordered so that the estimate (*B*) is followed by the CI and then the adjusted *p*-value.
-
-```{r}
-for (i in 1:length(tab)) {
-  # reorder
-  tab[[i]] <- tab[[i]][c("estimate", "ci", "p.adj",
-                         "estimate.1", "ci.1", "p.adj.1")]
-  # rename
-  names(tab[[i]]) <-c("B", "95% CI", "padj", 
-                      "B", "95% CI", "padj")
-}
-```
-
-## Table for PCL-R facets
-
-Facet data frames are bound together into a single data frame called *facettable*.
-
-```{r}
-facet12 <- as.data.frame(cbind(tab[[1]], NA, tab[[2]]))
-facet34 <- as.data.frame(cbind(tab[[3]], NA, tab[[4]]))
-facettable <- rbind(facet12, facet34)
-```
-
-The result is saved to Word using FlexTable.
-
-```{r}
-# create empty list
-flextable <- NULL
-
-# FlexTable won't allow to use rownames, 
-# so we need to create 'fake' rownames in the form of a column
-facettable$rownames <- c("SOCMITT5", "SOCPS", "IEDstages", 
-                         "IEDstageser", "SWMstrategy", "SWMtotaler",
-                         "ADHD", "SUD")
-  
-# reorder columns so that 'rownames' is first
-col_idx <- grep("rownames", names(facettable))
-facettable <- facettable[, c(col_idx, (1:ncol(facettable))[-col_idx])]
-  
-# create FlexTable
-flextable = FlexTable(facettable,
-                      header.columns = FALSE,
-                      header.text.props = textProperties(font.size = 10, font.weight = "bold"),
-                      body.text.props = textProperties(font.size = 10))
-  
-# add headers, level 1
-flextable = addHeaderRow(flextable,
-                         text.properties = textBold(),
-                         value = c("", "Step 1", "Step 2", "", "Step 1", "Step 2"),
-                         colspan = c(1, 3, 3, 1, 3, 3))
-
-# add headers, level 2
-flextable = addHeaderRow(flextable,
-                         value = c("", "B", "95% CI", "padj", "B", "95% CI", "padj",
-                                   "", "B", "95% CI", "padj", "B", "95% CI", "padj"),
-                         text.properties = textBold())
-  
-# align columns
-flextable[] = parCenter()
-flextable[, 1] <- parProperties(text.align = "left")
-
-# save table in Word doc
-doc <- docx()
-doc <- addFlexTable(doc, flextable)
-writeDoc(doc, file = "results/table2_facets.docx")
-```
-
-## Table for PCL-R Total score
-
-We repeated the above procedure.
-
-```{r}
-# grab PCL-R Total score data frame from 'tab'
-totalscoretable <- tab[[5]]
-
-# create empty list
-flextable <- NULL
-
-# FlexTable won't allow to use rownames, 
-# so we need to create 'fake' rownames in the form of a column
-totalscoretable$rownames <- c("SOCMITT5", "SOCPS", "IEDstages", 
-                              "IEDstageser", "SWMstrategy", "SWMtotaler",
-                              "ADHD", "SUD")
-  
-# reorder columns so that 'rownames' is first
-col_idx <- grep("rownames", names(totalscoretable))
-totalscoretable <- totalscoretable[, c(col_idx, (1:ncol(totalscoretable))[-col_idx])]
-  
-# create FlexTable
-flextable = FlexTable(totalscoretable,
-                      header.columns = FALSE,
-                      header.text.props = textProperties(font.size = 10, font.weight = "bold"),
-                      body.text.props = textProperties(font.size = 10))
-  
-# add headers, level 1
-flextable = addHeaderRow(flextable,
-                         text.properties = textBold(),
-                         value = c("", "Step 1", "Step 2"),
-                         colspan = c(1, 3, 3))
-
-# add headers, level 2  
-flextable = addHeaderRow(flextable,
-                         value = c("", "B", "95% CI", "padj", "B", "95% CI", "padj"),
-                         text.properties = textBold())
-  
-# align columns
-flextable[] = parCenter()
-flextable[, 1] <- parProperties(text.align = "left")
-
-# save to Word
-doc <- NULL
-doc <- docx()
-doc <- addFlexTable(doc, flextable)
-writeDoc(doc, file = "results/table3_totalscore.docx")
-```
-
-## Table for model statistics
-
-While model statistics are reported in text, for convenience, we want all the numbers stored neatly in a table as well. We'll simply append the *tab* data frames with model statistics, so that we can easily extract both coefficient and model statistics in the future, should we want to.
-
-```{r}
-for (i in 1:length(tab)) {
-  # create empty row
-  x <- rep(NA, ncol(tab[[i]]))
-  
-  # bind
-  tab[[i]] <- rbind(tab[[i]], x, x, x, x, x, x, x, x)
-  
-  # add row names (perhaps redudant, see later sections with FlexTable)
-  row.names(tab[[i]]) <- c("SOCMITT5", "SOCPS", "IEDstages",
-                           "IEDstageser", "SWMstrategy", "SWMtotaler",
-                           "ADHD", "SUD","F", "Fpadj",
-                           "CV R2", "CI CV R2 LL", "CI CV R2 UL",
-                           "Delta F", "Delta Fpadj", "Delta CV R2")
-}
-```
-
-Model statistics must go somewhere, so why not in the *B* column meanwhile.
-
-```{r}
-for (i in 1:length(tab)) {
-  # step 1
-  tab[[i]][9,1] <- step1wald[[i]]$F[2]          # model F value
-  tab[[i]][11,1] <- step1cv[[i]][4]             # CV R2
-  tab[[i]][12,1] <- step1cv[[i]][5]             # CI CV R2 LL
-  tab[[i]][13,1] <- step1cv[[i]][3]             # CI CV R2 UL
-  
-  # step 2
-  tab[[i]][9,4] <- step2wald[[i]]$F[2]          # model F value
-  tab[[i]][11,4] <- step2cv[[i]][4]             # CV R2
-  tab[[i]][12,4] <- step2cv[[i]][5]             # CI CV R2 LL
-  tab[[i]][13,4] <- step2cv[[i]][3]             # CI CV R2 UL
-  
-  # model comparison
-  tab[[i]][16,4] <- step2cv[[i]][3] - step1cv[[i]][3] # CV R2 change
-  tab[[i]][14,4] <- waldmod[[i]]$F[2]           # model change F
-}
-```
-
-Again, adjusted *p*-values are added manually. **Be careful, this is where you are most likely to mess up**.
-
-```{r}
-# model 1
-tab[[1]][10,1] <- padj[7]        # step 1 model 1 F adj p-value
-tab[[1]][10,4] <- padj[16]       # step 2 model 1 F adj p-value
-tab[[1]][15,4] <- padj[17]       # model 1 comparison adj p-value
-
-# model 2
-tab[[2]][10,1] <- padj[24]       # and so on...
-tab[[2]][10,4] <- padj[33]   
-tab[[2]][15,4] <- padj[34]       
-
-# model 3
-tab[[3]][10,1] <- padj[41]      
-tab[[3]][10,4] <- padj[50]     
-tab[[3]][15,4] <- padj[51]     
-
-# model 4
-tab[[4]][10,1] <- padj[58]     
-tab[[4]][10,4] <- padj[67]      
-tab[[4]][15,4] <- padj[68]  
-
-# model 5
-tab[[5]][10,1] <- padj[75]     
-tab[[5]][10,4] <- padj[84]    
-tab[[5]][15,4] <- padj[85]     
-```
-
-Now, since we just want the model statistics, we create a separate data frame (*regstat*) and store what we want in it. That way, *tab* is left alone and still contains all information.
-
-```{r}
-# create empty variable
-regstat <- NULL
-
-# remove rows and columns we don't need
-for (i in 1:length(tab)) {
-  regstat[[i]] <- tab[[i]][-c(1:8),-c(2, 3, 5, 6)]
-  regstat[[i]] <- round(regstat[[i]], 3)
-}
-
-# combine into data frame
-regstat <- as.data.frame(cbind(regstat[[1]], NA, 
-                               regstat[[2]], NA,
-                               regstat[[3]], NA,
-                               regstat[[4]], NA,
-                               regstat[[5]], NA))
-```
-
-Again, FlexTable is used to produce a table which is then saved to Word format.
-
-```{r}
-flextable <- NULL
-
-# add row names
-regstat$rownames <- c("F", "F Adj p", "CV R2", "CV R2 LL", "CV R2 UL",
-                      "Delta F", "Delta F Adj p", "Delta CV R2")
-
-# reorder columns so that 'rownames' is first
-col_idx <- grep("rownames", names(regstat))
-regstat <- regstat[, c(col_idx, (1:ncol(regstat))[-col_idx])]
-  
-# create FlexTable
-flextable <- FlexTable(regstat,
-                       header.columns = FALSE,
-                       header.text.props = textProperties(font.size = 10, font.weight = "bold"),
-                       body.text.props = textProperties(font.size = 10))
-  
-# add headers, level 1
-flextable <- addHeaderRow(flextable,
-                          text.properties = textBold(),
-                          value = c("",
-                                    "Interpersonal", "",
-                                    "Affective", "", 
-                                    "Lifestyle", "",
-                                    "Antisocial", "",
-                                    "Total score", ""),
-                          colspan = c(1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1))
-
-# add headers, level 2  
-flextable <- addHeaderRow(flextable,
-                          value = c("",
-                                    "Step 1", "Step 2", "",
-                                    "Step 1", "Step 2", "",
-                                    "Step 1", "Step 2", "",
-                                    "Step 1", "Step 2", "",
-                                    "Step 1", "Step 2", ""),
-                          text.properties = textBold())
-  
-# align columns
-flextable[] <- parCenter()
-flextable[, 1] <- parProperties(text.align = "left")
-
-# save to Word doc
-doc <- NULL
-doc <- docx()
-doc <- addFlexTable(doc, flextable)
-writeDoc(doc, file = "results/regressionsummary.docx")
-```
-
-# Relative importance estimation
-
-The relative importance esimations are plotted and saved in a .tiff image. See *relaimpo.R* for details.
-
-```{r}
-source("scripts/relaimpo.R")
-
-riplot <- plot_grid(
-  step1riplots[[1]] + ggtitle("PCL-R Interpersonal facet\nStep 1"), 
-  step1riplots[[2]] + ggtitle("PCL-R Affective facet\nStep 1"), 
-  step1riplots[[3]] + ggtitle("PCL-R Lifestyle facet\nStep 1"),
-  step1riplots[[4]] + ggtitle("PCL-R Antisocial facet\nStep 1"),
-  step1riplots[[5]] + ggtitle("PCL-R Total score\nStep 1"),
-  step2riplots[[1]] + ggtitle("PCL-R Interpersonal facet\nStep 2"),
-  step2riplots[[2]] + ggtitle("PCL-R Affective facet\nStep 2"),
-  step2riplots[[3]] + ggtitle("PCL-R Lifestyle facet\nStep 2"),
-  step2riplots[[4]] + ggtitle("PCL-R Antisocial facet\nStep 2"),
-  step2riplots[[5]] + ggtitle("PCL-R Total score\nStep 2"),
-  ncol = 5, nrow = 2, labels = "AUTO")
-
-# save for publication (in PDF)
-ggsave(filename = "figures/riplot.pdf",
-       plot = riplot,
-       height = 8,
-       width = 14,
-       dpi = 300)
-
+remove(modelVIF)
 ```
 
 # Session info
