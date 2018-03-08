@@ -2,9 +2,10 @@
 #   residuals vs fitted plots    #
 ##################################
 
+# lapply through modelList plotting fitted vs residuals
 resfitPlots <- lapply(modelList, function(i) {
     ggplot(i, aes(.fitted, .resid)) + 
-    geom_point() +
+    geom_point(shape = 16, size = 2, alpha = 0.5) +
     stat_smooth(method = "loess") + 
     geom_hline(yintercept = 0, col = "red", linetype = "dashed") + 
     xlab("Fitted values") + 
@@ -15,3 +16,14 @@ resfitPlots <- lapply(modelList, function(i) {
           axis.title = element_text(size = 10),
           plot.title = element_text(size = 12))
 })
+
+# combine into grid
+rfplots <- plot_grid(
+  resfitPlots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
+  resfitPlots[[2]] + ggtitle("PCL-R Affective facet"), 
+  resfitPlots[[3]] + ggtitle("PCL-R Lifestyle facet"),
+  resfitPlots[[4]] + ggtitle("PCL-R Antisocial facet"),
+  ncol = 4, nrow = 1, labels = NULL)
+
+# keep environment clean
+rm(resfitPlots)

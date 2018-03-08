@@ -10,14 +10,10 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
 # sensitive stuff
 /manuscript
 /results
 /figures
 /data
-<<<<<<< HEAD
-.httr-oauth
-=======
 /secret
-
->>>>>>> f802acf955101ed70e6abe6bb6fdc21db28a5d49

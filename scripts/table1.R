@@ -1,9 +1,13 @@
-# create a dataframe using variables 18 and 4-8
-table1 <- data.frame(describe(data[c(18, 4:8)]))
+# describe data
+table1 <- data.frame(describe(data))
 
-# remove columns we don't want, 
-# and only retain mean, SD, median, min and max
-table1 <- table1[-c(1,2,6,7,10,11,12,13)]
+# add variable names
+table1$variable <- row.names(table1)
+
+# reorder keeping only relevant columns,
+# round numerical columns to two decimal points
+table1 <- table1[, c(14, 3:4, 8:9)]
+table1[, c(2:5)] <- round(table1[, c(2:5)], 2)
 
 # rename column headings
-names(table1) <- c("Mean", "SD", "Median", "Min", "Max")
+names(table1) <- c("Variable", "Mean", "SD", "Min", "Max")

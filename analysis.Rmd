@@ -1,5 +1,5 @@
 ---
-title: "Psychopathy and executive functions: The impact of attention deficit hyperactivity disorder and substance use disorders"
+title: "Executive functions predict psychopathic traits in incarcerated violent offender"
 author: "Carl Delfin"
 date: "4 July 2017"
 output:
@@ -12,55 +12,61 @@ output:
 
 This is an RMarkdown document containing the R code used for all statistical analysis in the study *Psychopathic traits and executive functions*.
 
+Sixteen subjects failed to achieve convergence, either through too high (≤60%) or too low (≤40%) levels of successful inhibition. These staircase failures may arise through strategic slowing of the go reaction time, or through inconsistent performance or excessive distraction. They invalidate an assumption of the horse race model that Go-and stop-related processes are independent [11]. Thus, the final group for analysis was a total of 141 participants (94 females, 47 males).
+
 In the document, `this` refers to a function within R, and  [this](https://en.wikipedia.org/wiki/Hyperlink) is a link to some external website.
+
+# Clear environment
+
+Clear any existing data, values and functions from the global environment.
+
+```{r}
+rm(list = ls())
+```
+
+# Start timer
+
+Not really necessary, but I want to keep track of total running time for the entire analysis pipeline.
+
+```{r}
+ptm <- proc.time()
+```
 
 # Set-up
 
-## Clear environment
+Setting up paths, loading packages and reading data.
+
+## Paths and keys
+
+Paths (e.g. to data) and keys (e.g. to Google Sheets) are stored in an external script for security reasons. Every variable written in ALL CAPS is a pre-defined path/key.
 
 ```{r}
-rm(list=ls())
+source("secret/pathsandkeys.R")
 ```
 
-## Load packages
+## Load packages 
 
-```{r, message=FALSE, warning=TRUE}
-library(doMC)         # 'registerDoMC' function
-library(foreign)      # 'read.spss' function
-library(psych)        # required for 'describe' function in table_1.R
-library(Rmisc)        # required for 'CI' function in kfoldcv.R
-library(plyr)         # 'count' function
-library(dplyr)        # 'group_by' function
-library(ggplot2)      # pretty graphics
-library(broom)        # 'tidy' function
-library(relaimpo)     # relative importance estimation
-library(lmtest)       # wald F test
-library(caret)        # cross validation
-library(sandwich)     # heteroscedasticity-consistent standard errors
-library(car)          # variance inflation factors
-library(cowplot)      # 'plot_grid' function
-library(ReporteRs)    # 'FlexTable' function
-library(gdata)        # 'keep' function
-```
-
-## Prepare parallel processing
+All required packages are stored in a vector.
 
 ```{r}
-registerDoMC(cores = 2)
+requiredPackages <- c("foreign", "psych", "plyr", "dplyr", "reshape", "ggplot2", "ggcorrplot", "broom", "relaimpo", "lmtest", "caret", "sandwich", "car", "cowplot", "googlesheets")
 ```
 
-## Prepare data
+The `ipak` script goes through the *requiredPackages* vector and checks if the required packages are installed, installs them if not, then loads them.
 
-Read data, recalcuate one variable (from milliseconds to seconds), and set seed (I use the year the analysis was conducted, in this case 2017). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
+```{r message=FALSE, warning=FALSE}
+source("scripts/ipak.R")
+ipak(requiredPackages)
+rm(requiredPackages, ipak)
+```
 
-```{r, warning=FALSE}
-# read the data file
-data = read.spss("data/data_20171031.sav", to.data.frame = TRUE)
+## Data and seed
 
-data$SOCMITT5 <- data$SOCMITT5 / 1000
+The data is read from an SPSS file (not my own choice...), and the seed is set for reproducibility (I always use the year the analysis was conducted, in this case 2017, to avoid "seed hacking"). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
 
-# set seed
-seed <- 2017
+```{r, message=FALSE, warning=FALSE}
+data <- read.spss(DATALOCATION, to.data.frame = TRUE); rm(DATALOCATION)
+seed <- 2018
 ```
 
 # Data preparation
@@ -70,177 +76,104 @@ seed <- 2017
 Define the outcome variable and which predictors to use. The names must, obviously, match variable names in the data frame.
 
 ```{r}
-# other variables (age)
-otherList <- "age"
-
-# outcome
-outcomeVariables <- c("totalscore", "facet1", "facet2", "facet3", "facet4")
+# outcome variables
+outcomeVariables <- c("facet1", "facet2", "facet3", "facet4")
 
 # EF predictors
-predictorList <- c("SOCMITT5","SOCPS","IEDstages", "IEDtotaler", "SWMstrategy", "SWMtotaler", "SSTSSRT", "SSTSSD50")
+predictorList <- c("IEDstages", "IEDtotaler",
+                   "SWMtotaler", "SWMstrategy",
+                   "SSTSSRT", "SSTMDNRT",
+                   "SOCMITT5", "SOCPS")
+
+# rename column
+colnames(data)[colnames(data)=="SSTMediancorrectRTonGOtrials"] <- "SSTMDNRT"
+
+# other variables of interest
+otherList <- "age"
+
+# subset data to selected variables
+data <- data[, c(otherList, outcomeVariables, predictorList)]
+
+# drop missing data
+data <- data[complete.cases(data[, c(predictorList, outcomeVariables)]), ]
+
+# convert ms to s
+data$SOCMITT5 <- data$SOCMITT5 / 1000
+data$SSTSSRT <- data$SSTSSRT / 1000
+data$SSTMDNRT <- data$SSTMDNRT / 1000
 ```
 
-### Subset data
+# Data exploration
 
-Subset the data to remove unecessary variables.
+## Table 1
+
+Table 1 in the manuscript consists of an overview of numerical variables. Results are stored on Google Drive using the `googlesheets` package. See *table_1.R* for additional details.
 
 ```{r}
-# select only columns that match the variable names in our lists
-idx <- match(c(otherList, outcomeVariables, predictorList), names(data))
+source("scripts/table1.R")
 
-# subset
-data <- data[, idx] 
-
-# remove idx from environment
-remove(idx)
+# retrieve Google Drive sheet, store results
+gd_results <- gs_key(KEY)
+gd_results <- gd_results %>%
+gs_edit_cells(ws = "table1", input = table1)
+rm(table1)
 ```
 
-## Missing data
+## Diagostics
 
-Look for missing data in the list of predictors and note how many rows (if any) contain missing values. Save that in a text file.
+Before going further let's do a simple diagnostic check on the linear models. Looking at the residual versus fitted plots, we see some [heteroscedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity). Thus, heteroscedasticity-consistent standard errors will be used throughout. Looking at [Q-Q plots](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot), some deviations from normality are evident, although not enough to warrant further actions.
 
 ```{r}
-# look for NAs in the predictor variables
-missing <- describe(data[c(otherList, predictorList, outcomeVariables)])
-missingNames <- row.names(missing)
-tempMissing <- NULL
-
-# loop through list of predictor variables and save to temporary vector
-for (i in 1:length(missingNames)) {
-  tempMissing <- append(tempMissing,
-                        paste("There is/are",
-                              nrow(data)-missing[i,2], 
-                              "row/s missing in the", 
-                              missingNames[i],
-                              "variable"))
-}
-
-# capture output
-results_missing <- capture.output(tempMissing)
-
-# save output file to to .txt
-write(results_missing, file = "results/results_missing.txt")
-
-# remove from environment
-remove(i, missing, missingNames, tempMissing, results_missing)
+source("scripts/diagnostics.R")
 ```
 
-## Drop missing data
-
-Drop missing rows
-
-```{r}
-data <- na.omit(data)
-```
-
-## Data preparation
-
-
-
-
-Sixteen subjects failed to achieve convergence, either through too high (≤60%) or too low (≤40%) levels of successful inhibition. These staircase failures may arise through strategic slowing of the go reaction time, or through inconsistent performance or excessive distraction. They invalidate an assumption of the horse race model that Go-and stop-related processes are independent [11]. Thus, the final group for analysis was a total of 141 participants (94 females, 47 males).
-
-
-## Functions
-
-Source function for confidence interval estimation using heteroscedasticity consistent standard errors.
-
-```{r}
-source('scripts/confintrobust.R')
-```
-
-# Descriptive overview of data
-
-## Numerical variables
-
-Table 1 in the manuscript consists of an overview of numerical variables. Using `FlexTable`, a Word document with the table is created. See *table_1.R* for details.
-
-```{r}
-# describe data
-table1 <- data.frame(describe(data))
-
-# remove columns we don't want, round to two decimal points
-table1 <- round(table1[, c(3:4, 8:9)], 2)
-
-# create flextable
-table1 <- FlexTable(table1,
-                    header.text.props = textProperties(font.size = 10),
-                    body.text.props = textProperties(font.size = 10),
-                    add.rownames = TRUE)
-
-## write to .docx
-doc <- docx()
-doc <- addFlexTable(doc, table1)
-writeDoc(doc, file = "results/table1.docx")
-
-# keep workspace clean
-remove(doc, table1)
-```
-
-# Regression models
+# Model building
 
 ## Model formulas
 
-Model formulas are also stored in lists.
+Model formulas are stored in a list.
 
 ```{r}
-formulas <- as.list(NULL)
-
-for (i in 1:length(outcomeVariables)) {
-  formulas[[i]] <- paste(outcomeVariables[[i]], paste(predictorList, collapse = "+"), sep = "~")
-}
+formulaList <- as.list(NULL)
+formulaList <- lapply(outcomeVariables, function(i) {paste(i, paste(predictorList, collapse = "+"), sep = "~")})
 ```
 
-Model building
+## Estimate regression models
 
-For each model:
+This is where the fun stuff happens. We use the `lapply` function to loop through a series of **Lists**:
 
-2.  Do *k*-fold cross-validaton
-3.  Calculate model *F* using `waldtest` with [heteroscedasticity consistent (HC) standard errors](https://en.wikipedia.org/wiki/Heteroscedasticity-consistent_standard_errors)
-4.  Calculate coefficient statistics using HC standard errors
-5.  Calculate coefficient confidence intervals using HC standard errors
-5.  Calculate [variance inflation factors](https://en.wikipedia.org/wiki/Variance_inflation_factor)
-6.  Calculate relative importance estimation
-
-### Build step 1 models
-
+1. Loop through **formulaList** using `lm` to estimate regression models, and store the results in **modelList** 2. Loop through the newly created **modelList** using:
+    + `waldtest`, `coeftest` and `confint.robust` with [heteroscedasticity consistent (HC)](https://en.wikipedia.org/wiki/Heteroscedasticity-consistent_standard_errors)
+    + `vif` for extracting [variance inflation factors](https://en.wikipedia.org/wiki/Variance_inflation_factor)
+    + `calc.relimp` for relative importance estimation
+3. Loop through **formulaList** again using `train` to estimate cross-validated *R*<sup>2</sup>
 
 ```{r}
-# estimate linear models
-modelList <- lapply(formulas, function(x, data) eval(bquote(lm(.(x), data))), data = data)
+source("scripts/confintrobust.R")
 
-# lapply through all models
+# estimate linear models
+modelList <- lapply(formulaList, function(x, data) eval(bquote(lm(.(x), data))), data = data)
+
+# lapply through modelList
 modelWald <- lapply(modelList, waldtest, test = "F", vcov = vcovHC)
 modelHC   <- lapply(modelList, coeftest, vcov = vcovHC)
 modelCI   <- lapply(modelList, confint.robust)
 modelVIF  <- lapply(modelList, vif)
 modelRI   <- lapply(modelList, calc.relimp, type = "lmg", rela = FALSE)
+
+# cross-validation
 modelCV   <- NULL
-
-# specify repeated 10-fold CV repeated 100 times
 control = trainControl(method = "repeatedcv", number = 10, repeats = 10)
+set.seed(seed)
+modelCV <- lapply(formulaList, function(i) {
+  train(as.formula(i), data = data, method = "lm", trControl = control)})
 
-# loop CV through all outcome variables 
-for (i in 1:length(formulas)) {
-  modelCV[[i]] <- train(as.formula(formulas[[i]]), data = data, method = "lm", trControl = control)
-}
-
-remove(formulas, control, i)
+rm(formulaList, control)
 ```
 
-## Table 2
+## Model summary
 
-```{r}
-source("scripts/table2.R")
-  
-# save table in Word doc
-doc <- docx()
-doc <- addFlexTable(doc, table2)
-writeDoc(doc, file = "results/table2.docx")
-remove(doc, table2, modelHC, modelCI)
-```
-
-## Model statistics
+A summary of each regression model is stored in a text file. See *regressionsummary.R* for details.
 
 ```{r}
 source("scripts/regressionsummary.R")
@@ -249,89 +182,43 @@ source("scripts/regressionsummary.R")
 lapply(regressionsummary, write, "results/results.txt", append = TRUE)
 
 # remove from environment
-#remove(regressionsummary, modelWald, modelCV)
+rm(regressionsummary, modelWald, modelCV)
 ```
 
-# Relative importance estimation
+## Table 2
 
-The relative importance esimations are plotted and saved in a .tiff image. See *relaimpo.R* for details.
+Table 2 contains detailed model summaries, such as betas, *p*-values and CIs. See *table2.R* for details. Results are stored in the cloud using `googlesheets`.
+
+```{r}
+source("scripts/table2.R")
+
+# retrieve Google Drive sheet, store results
+gd_results <- gs_key(KEY)
+gd_results <- gd_results %>%
+gs_edit_cells(ws = "table2", input = table2)
+```
+
+## Relative importance estimation
+
+Relative importance estimates are plotted and saved in pdf. See *relaimpo.R* for details. Note that model RI sum to unadjusted model *R*<sup>2</sup>.
 
 ```{r}
 source("scripts/relaimpo.R")
 
-riplot <- plot_grid(
-  riplots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
-  riplots[[2]] + ggtitle("PCL-R Affective facet"), 
-  riplots[[3]] + ggtitle("PCL-R Lifestyle facet"),
-  riplots[[4]] + ggtitle("PCL-R Antisocial facet"),
-  riplots[[5]] + ggtitle("PCL-R Total score"),
-  ncol = 5, nrow = 1, labels = "AUTO")
-
 # save for publication (in PDF)
-ggsave(filename = "figures/riplot.pdf",
+ggsave(filename = "figures/riplot.tiff",
        plot = riplot,
-       height = 8,
-       width = 14,
+       height = 4,
+       width = 16,
        dpi = 300)
 
-remove(modelRI, riplot, riplots)
-```
-
-# Regression diagnostics
-
-## Residual vs. fitted plots
-
-The top row (panels A-E) shows to all step 1 models and the bottom row (panels F-J) shows all step 2 models.
-
-There are definite trends visible suggesting that the homoscedasticity assumption (i.e., constant variance of the residuals) of OLS may be violated, and thus inferences may be numerically unstable (although estimates are still unbiased). Transforming makes interpretation difficult, so instead, all inferences will be based on heteroscedasticity consistent standard errors using `vcovHC` [defaulting to the recommended type, HC3](http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/00TAS.pdf).
-
-```{r}
-source("scripts/resfitplots.R")
-rfplots <- plot_grid(
-  resfitPlots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
-  resfitPlots[[2]] + ggtitle("PCL-R Affective facet"), 
-  resfitPlots[[3]] + ggtitle("PCL-R Lifestyle facet"),
-  resfitPlots[[4]] + ggtitle("PCL-R Antisocial facet"),
-  resfitPlots[[5]] + ggtitle("PCL-R Total score"),
-  ncol = 5, nrow = 1, labels = "AUTO")
-
-# save figure for supplementary material
-ggsave(filename = "figures/rfplots.tiff",
-       plot = rfplots,
-       height = 3,
-       width = 14,
-       dpi = 300)
-
-remove(rfplot, resfitplots, rfplots)
-```
-
-## QQ plots
-
-QQ plots are used to look at the distribution of residuals. Apart from PCL-R Interpersonal facet models (panels A and F; looking somewhat lognormal) the residuals seem OK. The consequences of non-normal distributions are that estimates may not be optimal, and that confidence intervals and inference tests are invalid. However, ordinary least squares regression is actually quite robust and only really long-tailed distributions cause problems, and larger sample sizes also alleviate the problem. In our case, we'll proceed as usual (although bear this is mind).
-
-```{r}
-source("scripts/qqplots.R")
-qqplots <- plot_grid(
-  qqPlots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
-  qqPlots[[2]] + ggtitle("PCL-R Affective facet"), 
-  qqPlots[[3]] + ggtitle("PCL-R Lifestyle facet"),
-  qqPlots[[4]] + ggtitle("PCL-R Antisocial facet"),
-  qqPlots[[5]] + ggtitle("PCL-R Total score"),
-  ncol = 5, nrow = 1, labels = "AUTO")
-
-# save figure for supplementary material
-ggsave(filename = "figures/qqplots.tiff",
-       plot = qqplots,
-       height = 3,
-       width = 14,
-       dpi = 300)
-
-remove(qqPlots, qqplots)
+rm(riplot)
 ```
 
 ## Variance inflation factors
 
 Collinearity is assessed by looking at variance inflation factors (VIFs). VIFs are presented in text, so we only want a .txt with the output.
+
 ```{r}
 # print and save range of VIFs
 vifs <- capture.output(cat("The VIFs range from", range(modelVIF)[1], "to", range(modelVIF)[2]))
@@ -339,7 +226,7 @@ vifs <- capture.output(cat("The VIFs range from", range(modelVIF)[1], "to", rang
 # save to .txt
 write(vifs, file = "results/vifs.txt")
 
-remove(modelVIF)
+remove(modelVIF, vifs)
 ```
 
 # Session info
@@ -349,4 +236,11 @@ A text file with the session info.
 ```{r}
 sessInfo <- capture.output(sessionInfo())
 write(sessInfo, file = "sessioninfo.txt")
+```
+
+# Stop timer
+
+```{r}
+time <- proc.time() - ptm
+paste("analysis took", round(time[3]/60, 0), "minute(s)")
 ```
