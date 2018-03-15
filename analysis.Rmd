@@ -1,7 +1,7 @@
 ---
-title: "Executive functions predict psychopathic traits in incarcerated violent offender"
+title: "Executive functions predict psychopathic traits in incarcerated violent offenders"
 author: "Carl Delfin"
-date: "4 July 2017"
+date: "15 March 2018"
 output:
   pdf_document: default
   html_document: default
@@ -10,11 +10,9 @@ output:
 
 # Introduction
 
-This is an RMarkdown document containing the R code used for all statistical analysis in the study *Psychopathic traits and executive functions*.
+This RMarkdown document contains the R code used for all analysis in the study **Executive functions predict psychopathic traits in incarcerated violent offenders**.
 
-Sixteen subjects failed to achieve convergence, either through too high (≤60%) or too low (≤40%) levels of successful inhibition. These staircase failures may arise through strategic slowing of the go reaction time, or through inconsistent performance or excessive distraction. They invalidate an assumption of the horse race model that Go-and stop-related processes are independent [11]. Thus, the final group for analysis was a total of 141 participants (94 females, 47 males).
-
-In the document, `this` refers to a function within R, and  [this](https://en.wikipedia.org/wiki/Hyperlink) is a link to some external website.
+In this text, `this` refers to a function or variable within R, *this* to an externally sourced script, and [this](https://en.wikipedia.org/wiki/Hyperlink) is a link to some external website.
 
 # Clear environment
 
@@ -38,7 +36,7 @@ Setting up paths, loading packages and reading data.
 
 ## Paths and keys
 
-Paths (e.g. to data) and keys (e.g. to Google Sheets) are stored in an external script for security reasons. Every variable written in ALL CAPS is a pre-defined path/key.
+Paths and [API keys](https://developers.google.com/sheets/api/guides/authorizing#APIKey) are stored in an external script for security reasons. Variables written in ALL CAPS are pre-defined paths/keys.
 
 ```{r}
 source("secret/pathsandkeys.R")
@@ -49,10 +47,10 @@ source("secret/pathsandkeys.R")
 All required packages are stored in a vector.
 
 ```{r}
-requiredPackages <- c("foreign", "psych", "plyr", "dplyr", "reshape", "ggplot2", "ggcorrplot", "broom", "relaimpo", "lmtest", "caret", "sandwich", "car", "cowplot", "googlesheets")
+requiredPackages <- c("foreign", "googlesheets", "ggplot2", "caret", "psych", "relaimpo", "sandwich", "cowplot", "magrittr", "lmtest", "car", "broom")
 ```
 
-The `ipak` script goes through the *requiredPackages* vector and checks if the required packages are installed, installs them if not, then loads them.
+The *ipak* script goes through the `requiredPackages` vector and checks if the required packages are installed, installs them if not, then loads them.
 
 ```{r message=FALSE, warning=FALSE}
 source("scripts/ipak.R")
@@ -62,7 +60,7 @@ rm(requiredPackages, ipak)
 
 ## Data and seed
 
-The data is read from an SPSS file (not my own choice...), and the seed is set for reproducibility (I always use the year the analysis was conducted, in this case 2017, to avoid "seed hacking"). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
+The data is read from an SPSS file and the seed is set for reproducibility (I always use the year the analysis was conducted, in this case 2018, to avoid "seed hacking"). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
 
 ```{r, message=FALSE, warning=FALSE}
 data <- read.spss(DATALOCATION, to.data.frame = TRUE); rm(DATALOCATION)
@@ -86,7 +84,7 @@ predictorList <- c("IEDstages", "IEDtotaler",
                    "SOCMITT5", "SOCPS")
 
 # rename column
-colnames(data)[colnames(data)=="SSTMediancorrectRTonGOtrials"] <- "SSTMDNRT"
+colnames(data)[colnames(data) == "SSTMediancorrectRTonGOtrials"] <- "SSTMDNRT"
 
 # other variables of interest
 otherList <- "age"
@@ -111,8 +109,6 @@ Table 1 in the manuscript consists of an overview of numerical variables. Result
 
 ```{r}
 source("scripts/table1.R")
-
-# retrieve Google Drive sheet, store results
 gd_results <- gs_key(KEY)
 gd_results <- gd_results %>%
 gs_edit_cells(ws = "table1", input = table1)
@@ -121,7 +117,7 @@ rm(table1)
 
 ## Diagostics
 
-Before going further let's do a simple diagnostic check on the linear models. Looking at the residual versus fitted plots, we see some [heteroscedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity). Thus, heteroscedasticity-consistent standard errors will be used throughout. Looking at [Q-Q plots](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot), some deviations from normality are evident, although not enough to warrant further actions.
+Before going further let's do a simple diagnostic check on the linear models. Looking at the residual versus fitted plots, we see some [heteroscedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity). Thus, heteroscedasticity-consistent standard errors will be used throughout. Looking at [Q-Q plots](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot), some deviations from normality are evident, although not enough to warrant further actions. See *diagnostics.R* for details.
 
 ```{r}
 source("scripts/diagnostics.R")
@@ -135,18 +131,21 @@ Model formulas are stored in a list.
 
 ```{r}
 formulaList <- as.list(NULL)
-formulaList <- lapply(outcomeVariables, function(i) {paste(i, paste(predictorList, collapse = "+"), sep = "~")})
+formulaList <- lapply(outcomeVariables, function(i) {
+  paste(i, paste(predictorList, collapse = "+"), sep = "~")
+  })
 ```
 
 ## Estimate regression models
 
-This is where the fun stuff happens. We use the `lapply` function to loop through a series of **Lists**:
+This is where the fun stuff happens. We use the `lapply` function to loop through a series of lists:
 
-1. Loop through **formulaList** using `lm` to estimate regression models, and store the results in **modelList** 2. Loop through the newly created **modelList** using:
+1. Loop through `formulaList` using `lm` to estimate regression models, and store the results in `modelList`
+2. Loop through the newly created `modelList` using:
     + `waldtest`, `coeftest` and `confint.robust` with [heteroscedasticity consistent (HC)](https://en.wikipedia.org/wiki/Heteroscedasticity-consistent_standard_errors)
     + `vif` for extracting [variance inflation factors](https://en.wikipedia.org/wiki/Variance_inflation_factor)
     + `calc.relimp` for relative importance estimation
-3. Loop through **formulaList** again using `train` to estimate cross-validated *R*<sup>2</sup>
+3. Loop through `formulaList` again using `train` to estimate cross-validated *R*<sup>2</sup>
 
 ```{r}
 source("scripts/confintrobust.R")
@@ -163,7 +162,7 @@ modelRI   <- lapply(modelList, calc.relimp, type = "lmg", rela = FALSE)
 
 # cross-validation
 modelCV   <- NULL
-control = trainControl(method = "repeatedcv", number = 10, repeats = 10)
+control = trainControl(method = "repeatedcv", number = 10, repeats = 100)
 set.seed(seed)
 modelCV <- lapply(formulaList, function(i) {
   train(as.formula(i), data = data, method = "lm", trControl = control)})
@@ -177,22 +176,16 @@ A summary of each regression model is stored in a text file. See *regressionsumm
 
 ```{r}
 source("scripts/regressionsummary.R")
-
-# write to .txt
 lapply(regressionsummary, write, "results/results.txt", append = TRUE)
-
-# remove from environment
 rm(regressionsummary, modelWald, modelCV)
 ```
 
 ## Table 2
 
-Table 2 contains detailed model summaries, such as betas, *p*-values and CIs. See *table2.R* for details. Results are stored in the cloud using `googlesheets`.
+Table 2 contains detailed model summaries, such as betas, *p*-values and CIs. See *table2.R* for details. Results are stored using `googlesheets`.
 
 ```{r}
 source("scripts/table2.R")
-
-# retrieve Google Drive sheet, store results
 gd_results <- gs_key(KEY)
 gd_results <- gd_results %>%
 gs_edit_cells(ws = "table2", input = table2)
@@ -200,19 +193,16 @@ gs_edit_cells(ws = "table2", input = table2)
 
 ## Relative importance estimation
 
-Relative importance estimates are plotted and saved in pdf. See *relaimpo.R* for details. Note that model RI sum to unadjusted model *R*<sup>2</sup>.
+Relative importance estimates are plotted and saved in .tiff format. See *relaimpo.R* for details. Note that model relative importane sum to unadjusted model *R*<sup>2</sup>.
 
 ```{r}
 source("scripts/relaimpo.R")
-
-# save for publication (in PDF)
 ggsave(filename = "figures/riplot.tiff",
        plot = riplot,
-       height = 4,
+       height = 6,
        width = 16,
        dpi = 300)
-
-rm(riplot)
+#rm(riplot)
 ```
 
 ## Variance inflation factors
@@ -220,12 +210,8 @@ rm(riplot)
 Collinearity is assessed by looking at variance inflation factors (VIFs). VIFs are presented in text, so we only want a .txt with the output.
 
 ```{r}
-# print and save range of VIFs
 vifs <- capture.output(cat("The VIFs range from", range(modelVIF)[1], "to", range(modelVIF)[2]))
-
-# save to .txt
 write(vifs, file = "results/vifs.txt")
-
 remove(modelVIF, vifs)
 ```
 
@@ -240,7 +226,9 @@ write(sessInfo, file = "sessioninfo.txt")
 
 # Stop timer
 
+Stop timer, stores results in a text file.
+
 ```{r}
 time <- proc.time() - ptm
-paste("analysis took", round(time[3]/60, 0), "minute(s)")
+write(capture.output(paste("analysis took", round(time[3]/60, 0), "minute(s)")), file = "timer.txt")
 ```
