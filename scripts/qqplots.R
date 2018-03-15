@@ -24,10 +24,10 @@ ggQQ = function(lm) {
 qqPlots <- lapply(modelList, ggQQ)
 
 qqplots <- plot_grid(
-  qqPlots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
-  qqPlots[[2]] + ggtitle("PCL-R Affective facet"), 
-  qqPlots[[3]] + ggtitle("PCL-R Lifestyle facet"),
-  qqPlots[[4]] + ggtitle("PCL-R Antisocial facet"),
+  qqPlots[[1]] + ggtitle("PCL-R interpersonal facet"), 
+  qqPlots[[2]] + ggtitle("PCL-R affective facet"), 
+  qqPlots[[3]] + ggtitle("PCL-R lifestyle facet"),
+  qqPlots[[4]] + ggtitle("PCL-R antisocial facet"),
   ncol = 4, nrow = 1, labels = NULL)
 
 rm(ggQQ, qqPlots)

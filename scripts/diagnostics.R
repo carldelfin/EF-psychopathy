@@ -14,13 +14,15 @@ ggsave(filename = "figures/rfplots.tiff",
        plot = rfplots,
        height = 3,
        width = 16,
-       dpi = 300)
+       dpi = 300,
+       compression = "lzw")
 
 ggsave(filename = "figures/qqplots.tiff",
        plot = qqplots,
        height = 3,
        width = 16,
-       dpi = 300)
+       dpi = 300,
+       compression = "lzw")
 
 # remove everything
 rm(rfplots, qqplots, formulaList, modelList)

@@ -19,10 +19,10 @@ resfitPlots <- lapply(modelList, function(i) {
 
 # combine into grid
 rfplots <- plot_grid(
-  resfitPlots[[1]] + ggtitle("PCL-R Interpersonal facet"), 
-  resfitPlots[[2]] + ggtitle("PCL-R Affective facet"), 
-  resfitPlots[[3]] + ggtitle("PCL-R Lifestyle facet"),
-  resfitPlots[[4]] + ggtitle("PCL-R Antisocial facet"),
+  resfitPlots[[1]] + ggtitle("PCL-R interpersonal facet"), 
+  resfitPlots[[2]] + ggtitle("PCL-R affective facet"), 
+  resfitPlots[[3]] + ggtitle("PCL-R lifestyle facet"),
+  resfitPlots[[4]] + ggtitle("PCL-R antisocial facet"),
   ncol = 4, nrow = 1, labels = NULL)
 
 # keep environment clean
