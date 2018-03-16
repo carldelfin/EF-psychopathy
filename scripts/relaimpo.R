@@ -43,8 +43,7 @@ riplots <- lapply(modelRI, function(i) {
           axis.title.y = element_text(size = 8),
           axis.text.y = element_text(size = 8),
           panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.title = element_text(size = 8)) +
+          panel.grid.minor = element_blank()) +
     
     # this is model variance
     annotate("text",
@@ -56,12 +55,16 @@ riplots <- lapply(modelRI, function(i) {
 })
 
 # manually add titles
-plot1 <- riplots[[1]] + ggtitle("PCL-R interpersonal facet")
-plot2 <- riplots[[2]] + ggtitle("PCL-R affective facet")
-plot3 <- riplots[[3]] + ggtitle("PCL-R lifestyle facet")
-plot4 <- riplots[[4]] + ggtitle("PCL-R antisocial facet")
+plot1 <- riplots[[1]] + ggtitle("PCL-R interpersonal facet") + theme(plot.title = element_text(size = 8, face = "plain"))
+plot2 <- riplots[[2]] + ggtitle("PCL-R affective facet") + theme(plot.title = element_text(size = 8, face = "plain"))
+plot3 <- riplots[[3]] + ggtitle("PCL-R lifestyle facet") + theme(plot.title = element_text(size = 8, face = "plain"))
+plot4 <- riplots[[4]] + ggtitle("PCL-R antisocial facet") + theme(plot.title = element_text(size = 8, face = "plain"))
 
 # arrange in grid
-riplot <- plot_grid(plot1, plot2, plot3, plot4, ncol = 4, nrow = 1, labels = NULL)
+riplot <- plot_grid(plot1, plot2, plot3, plot4,
+                    ncol = 4,
+                    nrow = 1,
+                    labels = c("(A)", "(B)", "(C)", "(D)"),
+                    label_size = 8)
 
-rm(modelRI, riplots, plot1, plot2, plot3, plot4, i)
+rm(modelRI, riplots, plot1, plot2, plot3, plot4)

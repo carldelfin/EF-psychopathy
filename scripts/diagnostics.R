@@ -9,7 +9,7 @@ modelList <- lapply(formulaList, function(x, data) eval(bquote(lm(.(x), data))),
 source("scripts/resfitplots.R")
 source("scripts/qqplots.R")
 
-# save plots for supplementary material
+# save plots for visual examination
 ggsave(filename = "figures/rfplots.tiff",
        plot = rfplots,
        height = 3,

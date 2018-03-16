@@ -117,7 +117,7 @@ rm(table1)
 
 ## Diagostics
 
-Before going further let's do a simple diagnostic check on the linear models. Looking at the residual versus fitted plots, we see some [heteroscedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity). Thus, heteroscedasticity-consistent standard errors will be used throughout. Looking at [Q-Q plots](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot), some deviations from normality are evident, although not enough to warrant further actions. See *diagnostics.R* for details.
+Before going further let's do a simple diagnostic check on the linear models. Some [heteroscedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity) is evident, thus, heteroscedasticity-consistent standard errors will be used throughout. Looking at [Q-Q plots](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot), some deviations from normality are seen, although not enough to warrant further actions. See *diagnostics.R* for details.
 
 ```{r}
 source("scripts/diagnostics.R")

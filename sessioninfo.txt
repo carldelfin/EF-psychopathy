@@ -20,21 +20,21 @@ other attached packages:
 [17] lattice_0.20-35    ggplot2_2.2.1      googlesheets_0.2.2 foreign_0.8-69    
 
 loaded via a namespace (and not attached):
- [1] httr_1.3.1         ddalpha_1.3.1      tidyr_0.7.2        sfsmisc_1.1-1     
- [5] jsonlite_1.5       splines_3.4.2      foreach_1.4.4      prodlim_1.6.1     
+ [1] httr_1.3.1         ddalpha_1.3.1      tidyr_0.7.2        jsonlite_1.5      
+ [5] sfsmisc_1.1-1      splines_3.4.2      foreach_1.4.4      prodlim_1.6.1     
  [9] assertthat_0.2.0   stats4_3.4.2       DRR_0.0.2          cellranger_1.1.0  
 [13] yaml_2.1.15        robustbase_0.92-8  ipred_0.9-6        quantreg_5.34     
 [17] glue_1.2.0         minqa_1.2.4        colorspace_1.3-2   recipes_0.1.1     
 [21] plyr_1.8.4         timeDate_3042.101  pkgconfig_2.0.1    CVST_0.2-1        
 [25] SparseM_1.77       purrr_0.2.4        corpcor_1.6.9      scales_0.5.0      
 [29] gower_0.1.2        lava_1.5.1         MatrixModels_0.4-1 lme4_1.1-14       
-[33] tibble_1.3.4       openssl_0.9.9      mgcv_1.8-20        withr_2.1.1       
+[33] openssl_0.9.9      tibble_1.3.4       mgcv_1.8-20        withr_2.1.1       
 [37] nnet_7.3-12        lazyeval_0.2.1     pbkrtest_0.4-7     mnormt_1.5-5      
 [41] nlme_3.1-131       xml2_1.1.1         dimRed_0.1.0       class_7.3-14      
 [45] tools_3.4.2        stringr_1.2.0      kernlab_0.9-25     munsell_0.4.3     
 [49] bindrcpp_0.2       compiler_3.4.2     RcppRoll_0.2.2     rlang_0.2.0       
 [53] nloptr_1.0.4       iterators_1.0.9    labeling_0.3       gtable_0.2.0      
-[57] ModelMetrics_1.1.0 codetools_0.2-15   curl_3.0           rematch_1.0.1     
+[57] ModelMetrics_1.1.0 codetools_0.2-15   rematch_1.0.1      curl_3.0          
 [61] reshape2_1.4.3     R6_2.2.2           lubridate_1.7.1    knitr_1.17        
 [65] dplyr_0.7.4        bindr_0.1          stringi_1.1.6      parallel_3.4.2    
 [69] Rcpp_0.12.14       rpart_4.1-11       DEoptimR_1.0-8     tidyselect_0.2.3  
