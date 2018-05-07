@@ -11,3 +11,9 @@ table1[, c(2:5)] <- round(table1[, c(2:5)], 2)
 
 # rename column headings
 names(table1) <- c("Variable", "Mean", "SD", "Min", "Max")
+
+gd_results <- gs_key(KEY)
+gd_results <- gd_results %>%
+  gs_edit_cells(ws = "table1", input = table1)
+
+rm(table1)

@@ -13,11 +13,11 @@ for (i in 1:length(outcomeVariables)) {
     ", p = ",
     round(modelWald[[i]]$`Pr(>F)`[2], 3),
     ", R2CV = ",
-    round(mean(modelCV[[i]]$resample$Rsquared), 2),
+    round(mean(modelCV[[i]]$resample$Rsquared), 3),
     ", 95% CI [",
-    round(mean(modelCV[[i]]$resample$Rsquared) - 2 * (sd(modelCV[[i]]$resample$Rsquared) / sqrt(length(modelCV[[i]]$resample$Rsquared))), 2),
+    round(mean(modelCV[[i]]$resample$Rsquared) - 3 * (sd(modelCV[[i]]$resample$Rsquared) / sqrt(length(modelCV[[i]]$resample$Rsquared))), 3),
     ", ",
-    round(mean(modelCV[[i]]$resample$Rsquared) + 2 * (sd(modelCV[[i]]$resample$Rsquared) / sqrt(length(modelCV[[i]]$resample$Rsquared))), 2),
+    round(mean(modelCV[[i]]$resample$Rsquared) + 3 * (sd(modelCV[[i]]$resample$Rsquared) / sqrt(length(modelCV[[i]]$resample$Rsquared))), 3),
     "]",
     sep = "")))
 }

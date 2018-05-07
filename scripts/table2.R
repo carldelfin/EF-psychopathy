@@ -4,8 +4,8 @@ tidytable <- lapply(tidytable, function(i) {i[-1, ]})
 
 # this is bad practice, but also works
 for (i in 1:length(tidytable)) {
-  tidytable[[i]]$cilow  <- round(modelCI[[i]][-1, 1], 2)  # add LL CI
-  tidytable[[i]]$cihigh <- round(modelCI[[i]][-1, 2], 2)  # add UL CI
+  tidytable[[i]]$cilow  <- round(modelCI[[i]][-1, 1], 4)  # add LL CI
+  tidytable[[i]]$cihigh <- round(modelCI[[i]][-1, 2], 4)  # add UL CI
   tidytable[[i]][, 2]   <- round(tidytable[[i]][, 2], 2)  # round estimate
   tidytable[[i]][, 5]   <- round(tidytable[[i]][, 5], 3)  # round p-value
   tidytable[[i]]        <- transform(tidytable[[i]], ci = paste(cilow, cihigh, sep=", "))

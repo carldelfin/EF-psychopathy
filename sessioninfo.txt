@@ -1,6 +1,6 @@
 R version 3.4.2 (2017-09-28)
 Platform: x86_64-apple-darwin15.6.0 (64-bit)
-Running under: macOS High Sierra 10.13.2
+Running under: macOS High Sierra 10.13.4
 
 Matrix products: default
 BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
@@ -17,24 +17,27 @@ other attached packages:
  [5] magrittr_1.5       cowplot_0.9.1      sandwich_2.4-0     relaimpo_2.2-2    
  [9] mitools_2.3        survey_3.32-1      survival_2.41-3    Matrix_1.2-11     
 [13] boot_1.3-20        MASS_7.3-47        psych_1.7.8        caret_6.0-78      
-[17] lattice_0.20-35    ggplot2_2.2.1      googlesheets_0.2.2 foreign_0.8-69    
+[17] lattice_0.20-35    reshape_0.8.7      ggcorrplot_0.1.1   ggplot2_2.2.1     
+[21] googlesheets_0.2.2 foreign_0.8-69    
 
 loaded via a namespace (and not attached):
- [1] httr_1.3.1         ddalpha_1.3.1      tidyr_0.7.2        jsonlite_1.5      
- [5] sfsmisc_1.1-1      splines_3.4.2      foreach_1.4.4      prodlim_1.6.1     
- [9] assertthat_0.2.0   stats4_3.4.2       DRR_0.0.2          cellranger_1.1.0  
-[13] yaml_2.1.15        robustbase_0.92-8  ipred_0.9-6        quantreg_5.34     
-[17] glue_1.2.0         minqa_1.2.4        colorspace_1.3-2   recipes_0.1.1     
-[21] plyr_1.8.4         timeDate_3042.101  pkgconfig_2.0.1    CVST_0.2-1        
-[25] SparseM_1.77       purrr_0.2.4        corpcor_1.6.9      scales_0.5.0      
-[29] gower_0.1.2        lava_1.5.1         MatrixModels_0.4-1 lme4_1.1-14       
-[33] openssl_0.9.9      tibble_1.3.4       mgcv_1.8-20        withr_2.1.1       
-[37] nnet_7.3-12        lazyeval_0.2.1     pbkrtest_0.4-7     mnormt_1.5-5      
-[41] nlme_3.1-131       xml2_1.1.1         dimRed_0.1.0       class_7.3-14      
-[45] tools_3.4.2        stringr_1.2.0      kernlab_0.9-25     munsell_0.4.3     
-[49] bindrcpp_0.2       compiler_3.4.2     RcppRoll_0.2.2     rlang_0.2.0       
-[53] nloptr_1.0.4       iterators_1.0.9    labeling_0.3       gtable_0.2.0      
-[57] ModelMetrics_1.1.0 codetools_0.2-15   rematch_1.0.1      curl_3.0          
-[61] reshape2_1.4.3     R6_2.2.2           lubridate_1.7.1    knitr_1.17        
-[65] dplyr_0.7.4        bindr_0.1          stringi_1.1.6      parallel_3.4.2    
-[69] Rcpp_0.12.14       rpart_4.1-11       DEoptimR_1.0-8     tidyselect_0.2.3  
+ [1] nlme_3.1-131       pbkrtest_0.4-7     lubridate_1.7.1    httr_1.3.1        
+ [5] dimRed_0.1.0       rprojroot_1.3-1    tools_3.4.2        backports_1.1.1   
+ [9] R6_2.2.2           rpart_4.1-11       lazyeval_0.2.1     mgcv_1.8-20       
+[13] colorspace_1.3-2   nnet_7.3-12        withr_2.1.1        tidyselect_0.2.3  
+[17] mnormt_1.5-5       rematch_1.0.1      curl_3.0           compiler_3.4.2    
+[21] quantreg_5.34      SparseM_1.77       xml2_1.1.1         labeling_0.3      
+[25] scales_0.5.0       sfsmisc_1.1-1      DEoptimR_1.0-8     robustbase_0.92-8 
+[29] stringr_1.3.0      digest_0.6.15      minqa_1.2.4        rmarkdown_1.8     
+[33] pkgconfig_2.0.1    htmltools_0.3.6    lme4_1.1-14        rlang_0.2.0       
+[37] ddalpha_1.3.1      bindr_0.1          jsonlite_1.5       dplyr_0.7.4       
+[41] ModelMetrics_1.1.0 Rcpp_0.12.14       munsell_0.4.3      stringi_1.1.6     
+[45] yaml_2.1.15        plyr_1.8.4         recipes_0.1.1      parallel_3.4.2    
+[49] splines_3.4.2      knitr_1.17         pillar_1.2.1       corpcor_1.6.9     
+[53] reshape2_1.4.3     codetools_0.2-15   stats4_3.4.2       CVST_0.2-1        
+[57] glue_1.2.0         evaluate_0.10.1    nloptr_1.0.4       foreach_1.4.4     
+[61] MatrixModels_0.4-1 cellranger_1.1.0   openssl_0.9.9      gtable_0.2.0      
+[65] purrr_0.2.4        tidyr_0.8.0        kernlab_0.9-25     assertthat_0.2.0  
+[69] DRR_0.0.2          gower_0.1.2        prodlim_1.6.1      class_7.3-14      
+[73] timeDate_3042.101  RcppRoll_0.2.2     tibble_1.4.2       iterators_1.0.9   
+[77] bindrcpp_0.2       lava_1.5.1         ipred_0.9-6       
