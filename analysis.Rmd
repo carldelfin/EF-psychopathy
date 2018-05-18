@@ -39,7 +39,7 @@ Setting up paths, loading packages and reading data.
 Paths and [API keys](https://developers.google.com/sheets/api/guides/authorizing#APIKey) are stored in an external script for security reasons. Variables written in ALL CAPS are pre-defined paths/keys.
 
 ```{r}
-source("secret/pathsandkeys.R")
+source("hidden/pathsandkeys.R")
 ```
 
 ## Load packages 
@@ -185,8 +185,6 @@ A summary of each regression model is stored in a text file. See *regressionsumm
 
 ```{r}
 source("scripts/regressionsummary.R")
-lapply(regressionsummary, write, "results/results.txt", append = TRUE)
-rm(regressionsummary, modelWald, modelCV)
 ```
 
 ## Table 2
@@ -195,9 +193,6 @@ Table 2 contains detailed model summaries, such as betas, *p*-values and CIs. Se
 
 ```{r}
 source("scripts/table2.R")
-gd_results <- gs_key(KEY)
-gd_results <- gd_results %>%
-gs_edit_cells(ws = "table2", input = table2)
 ```
 
 ## Relative importance estimation
@@ -206,7 +201,7 @@ Relative importance estimates are plotted and saved in .tiff format. See *relaim
 
 ```{r}
 source("scripts/relaimpo.R")
-ggsave(filename = "figures/riplot.tiff",
+ggsave(filename = "hidden/figures/riplot.tiff",
        plot = riplot,
        height = 8,
        width = 20,
@@ -222,7 +217,7 @@ Collinearity is assessed by looking at variance inflation factors (VIFs). VIFs a
 
 ```{r}
 vifs <- capture.output(cat("The VIFs range from", range(modelVIF)[1], "to", range(modelVIF)[2]))
-write(vifs, file = "results/vifs.txt")
+write(vifs, file = "hidden/results/vifs.txt")
 remove(modelVIF, vifs)
 ```
 
@@ -232,7 +227,7 @@ A text file with the session info.
 
 ```{r}
 sessInfo <- capture.output(sessionInfo())
-write(sessInfo, file = "sessioninfo.txt")
+write(sessInfo, file = "log/sessioninfo.txt")
 ```
 
 # Stop timer
@@ -241,5 +236,5 @@ Stop timer, store results in a text file.
 
 ```{r}
 time <- proc.time() - ptm
-write(capture.output(paste("analysis took", round(time[3]/60, 0), "minute(s)")), file = "timer.txt")
+write(capture.output(paste("analysis took", round(time[3]/60, 0), "minute(s)")), file = "log/timer.txt")
 ```

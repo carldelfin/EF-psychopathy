@@ -10,14 +10,14 @@ source("scripts/resfitplots.R")
 source("scripts/qqplots.R")
 
 # save plots for visual examination
-ggsave(filename = "figures/rfplots.tiff",
+ggsave(filename = "hidden/figures/rfplots.tiff",
        plot = rfplots,
        height = 3,
        width = 16,
        dpi = 300,
        compression = "lzw")
 
-ggsave(filename = "figures/qqplots.tiff",
+ggsave(filename = "hidden/figures/qqplots.tiff",
        plot = qqplots,
        height = 3,
        width = 16,

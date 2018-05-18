@@ -21,3 +21,6 @@ for (i in 1:length(outcomeVariables)) {
     "]",
     sep = "")))
 }
+
+lapply(regressionsummary, write, "hidden/results/results.txt", append = TRUE)
+rm(regressionsummary, modelWald, modelCV)

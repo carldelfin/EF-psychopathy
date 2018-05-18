@@ -29,5 +29,10 @@ mod <- c("Interpersonal facet", "", "", "", "",
 # rbind into one data frame
 table2 <- rbind(mod, table2)
 
+# send to google docs
+gd_results <- gs_key(KEY)
+gd_results <- gd_results %>%
+  gs_edit_cells(ws = "table2", input = table2)
+
 # keep environment clean
-rm(i, tidytable, mod, modelHC, modelCI)
+rm(i, tidytable, mod, modelHC, modelCI, table2)

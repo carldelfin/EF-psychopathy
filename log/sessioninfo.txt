@@ -1,0 +1,42 @@
+R version 3.4.2 (2017-09-28)
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
+Running under: macOS High Sierra 10.13.4
+
+Matrix products: default
+BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] grid      stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] broom_0.4.3        car_2.1-6          lmtest_0.9-35      zoo_1.8-0         
+ [5] magrittr_1.5       cowplot_0.9.1      sandwich_2.4-0     relaimpo_2.2-2    
+ [9] mitools_2.3        survey_3.32-1      survival_2.41-3    Matrix_1.2-11     
+[13] boot_1.3-20        MASS_7.3-47        psych_1.7.8        caret_6.0-78      
+[17] lattice_0.20-35    reshape_0.8.7      ggcorrplot_0.1.1   ggplot2_2.2.1     
+[21] googlesheets_0.2.2 foreign_0.8-69    
+
+loaded via a namespace (and not attached):
+ [1] nlme_3.1-131       pbkrtest_0.4-7     lubridate_1.7.1    dimRed_0.1.0      
+ [5] httr_1.3.1         tools_3.4.2        R6_2.2.2           rpart_4.1-11      
+ [9] lazyeval_0.2.1     mgcv_1.8-20        colorspace_1.3-2   nnet_7.3-12       
+[13] withr_2.1.1        tidyselect_0.2.3   mnormt_1.5-5       rematch_1.0.1     
+[17] curl_3.0           compiler_3.4.2     quantreg_5.34      SparseM_1.77      
+[21] xml2_1.1.1         labeling_0.3       scales_0.5.0       sfsmisc_1.1-1     
+[25] DEoptimR_1.0-8     robustbase_0.92-8  stringr_1.3.0      minqa_1.2.4       
+[29] pkgconfig_2.0.1    lme4_1.1-14        rlang_0.2.0        ddalpha_1.3.1     
+[33] bindr_0.1          jsonlite_1.5       dplyr_0.7.4        ModelMetrics_1.1.0
+[37] Rcpp_0.12.14       munsell_0.4.3      stringi_1.1.6      yaml_2.1.15       
+[41] plyr_1.8.4         recipes_0.1.1      parallel_3.4.2     splines_3.4.2     
+[45] knitr_1.17         pillar_1.2.1       corpcor_1.6.9      reshape2_1.4.3    
+[49] codetools_0.2-15   stats4_3.4.2       CVST_0.2-1         glue_1.2.0        
+[53] nloptr_1.0.4       foreach_1.4.4      MatrixModels_0.4-1 cellranger_1.1.0  
+[57] gtable_0.2.0       openssl_0.9.9      purrr_0.2.4        tidyr_0.8.0       
+[61] kernlab_0.9-25     assertthat_0.2.0   DRR_0.0.2          gower_0.1.2       
+[65] prodlim_1.6.1      class_7.3-14       timeDate_3042.101  RcppRoll_0.2.2    
+[69] tibble_1.4.2       iterators_1.0.9    bindrcpp_0.2       lava_1.5.1        
+[73] ipred_0.9-6       
