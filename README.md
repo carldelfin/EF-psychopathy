@@ -6,7 +6,7 @@ The main analysis is done in **analysis.Rmd**, with externally sourced scripts l
 
 Note also that the data itself is **not** publicly available due to its sensitive nature.
 
-The repositiry is structured as follows:
+The repository is structured as follows:
 
 ![fileandfolderstructure](https://raw.githubusercontent.com/carldelfin/EF-psychopathy/master/img/filestructure.png)
 
