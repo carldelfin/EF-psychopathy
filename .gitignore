@@ -8,13 +8,10 @@
 ._*
 .Spotlight-V100
 .Trashes
-.httr-oath
+.httr-oauth
 ehthumbs.db
 Thumbs.db
 
 # sensitive stuff
-/manuscript
-/results
-/figures
-/data
-/secret
+/hidden
+
