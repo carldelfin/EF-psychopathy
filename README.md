@@ -8,7 +8,7 @@ Note also that the data itself is **not** publicly available due to its sensitiv
 
 The files are ordered as follows:
 
-![filestructure](carldelfin.github.com/EF-psychopathy/img/filestructure.png)
+![alt text](https://raw.githubusercontent.com/carldelfin/EF-psychopathy/master/img/filestructure.png)
 
 For any questions or comments, please contact me at carl.delfin *at* gu.se.
 
