@@ -6,6 +6,10 @@ The main analysis is done in **analysis.Rmd**, with externally sourced scripts l
 
 Note also that the data itself is **not** publicly available due to its sensitive nature.
 
+The files are ordered as follows:
+
+![filestructure](carldelfin.github.com/EF-psychopathy/img/filestructure.png)
+
 For any questions or comments, please contact me at carl.delfin *at* gu.se.
 
 
