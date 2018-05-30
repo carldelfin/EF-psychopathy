@@ -145,9 +145,9 @@ source("scripts/classicalanalysis.R")
 **Note!** This step uses [Markov chain Monte Carlo](https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo) to estimate the posterior distribution, which takes a significant amount of time.
 
 ```{r}
-# select number of MCMC iterations and number of burn-in iterations
-niter <- 100
-nburnin <- 10
+# select number of MCMC samples and number of burn-in samples
+niter <- 20000
+nburnin <- 2000
 
 # start timer and grap some popcorn
 tic("Bayesian analysis using MCMC")
