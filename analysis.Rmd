@@ -14,7 +14,7 @@ This RMarkdown document contains the R code used for all analysis in the study *
 
 # Clear environment
 
-Clear any existing data, values and functions from the global environment.
+Clear any existing items from the global environment.
 
 ```{r}
 rm(list = ls())
@@ -22,16 +22,19 @@ rm(list = ls())
 
 # Initial set-up
 
-## Timer
+## Start timer
+
+Not really necessary *per se*, but the analysis does take some time to run, owing to the MCMC procedure.
 
 ```{r}
-# clear timer and timer log, just in case
+# clear timer and timer log
 tic.clear()
 tic.clearlog()
 
 # start timer
 tic("Full analysis")
 ```
+
 ## Paths and keys
 
 Paths are stored in an external script for security reasons. 
@@ -54,7 +57,7 @@ requiredPackages <- c("foreign",
                       "tictoc")
 ```
 
-The *ipak* script goes through the `requiredPackages` vector and checks if the required packages are installed, installs them if not, then loads them.
+The *ipak.R* script goes through the `requiredPackages` vector and checks if the required packages are installed, installs them if not, then loads them. Note that other packages are loaded as dependencies. For a complete overivew, see *sessioninfo.txt*.
 
 ```{r}
 source("scripts/ipak.R")
@@ -154,7 +157,7 @@ toc()
 
 # Figure 1
 
-Figure 1 is a three-panel overview Pearson's *r*, *p*-values and Bayes factors arranged in a matrix. See *figure1.R* for details.
+Figure 1 is a three-panel overview Pearson's *r* values, *p*-values and Bayes factors arranged in a matrix. See *figure1.R* for details.
 
 ```{r}
 source("scripts/figure1.R")
@@ -162,7 +165,7 @@ ggsave(filename = "hidden/figures/figure1.tiff",
        plot = bayesplot,
        height = 11.69,
        width = 7.5,
-       dpi = 300,
+       dpi = 600,
        units = "in")
 rm(bayesplot)
 ```

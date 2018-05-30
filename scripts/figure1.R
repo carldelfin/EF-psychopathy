@@ -1,4 +1,4 @@
-# titles with italics
+# legend titles with italics
 ctitle <- expression(paste("Pearson's ", italic("r")))
 ptitle <- expression(paste(italic("p"), "-value"))
 
@@ -97,7 +97,8 @@ plot_p <- ggplot(cor, aes(x = X, y = Y, fill = p))+
             width = 0.75,
             height = 0.85,
             linetype = "dotted",
-            show.legend = FALSE) + 
+            show.legend = FALSE) +
+  # below is for use with FDR correction
   #geom_tile(data = cor,
   #          aes(colour = factor(sigpfdr, c("yes", "no")),
   #              size = factor(sigpfdr, c("yes", "no"))), 
