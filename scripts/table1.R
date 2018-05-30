@@ -1,5 +1,5 @@
-# describe data
-table1 <- data.frame(describe(data))
+# extract statistics
+table1 <- data.frame(describe(data[c(psychopathicTraits, executiveFunctions)]))
 
 # add variable names
 table1$variable <- row.names(table1)
@@ -12,8 +12,13 @@ table1[, c(2:5)] <- round(table1[, c(2:5)], 2)
 # rename column headings
 names(table1) <- c("Variable", "Mean", "SD", "Min", "Max")
 
-gd_results <- gs_key(KEY)
-gd_results <- gd_results %>%
-  gs_edit_cells(ws = "table1", input = table1)
+# create Word document
+doc <- docx()
+doc <- addTitle(doc, "Table 1")
+doc <- addFlexTable(doc, FlexTable(table1))
 
-rm(table1)
+# save
+writeDoc(doc, file = "hidden/results/table1.docx")
+
+# remove temporary variables
+rm(doc, table1)

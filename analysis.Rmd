@@ -1,7 +1,7 @@
 ---
-title: "Predicting psychopathic traits in incarcerated violent offenders using measures of executive functions"
+title: "Examining associations between psychopathic traits and executive functions in incarcerated violent offenders"
 author: "Carl Delfin"
-date: "15 March 2018"
+date: "30 May 2018"
 output:
   pdf_document: default
   html_document: default
@@ -10,9 +10,7 @@ output:
 
 # Introduction
 
-This RMarkdown document contains the R code used for all analysis in the study **Predicting psychopathic traits in incarcerated violent offenders using measures of executive functions**.
-
-In this text, `this` refers to a function or variable within R, *this* to an externally sourced script, and [this](https://en.wikipedia.org/wiki/Hyperlink) is a link to some external website.
+This RMarkdown document contains the R code used for all analysis in the study **Examining associations between psychopathic traits and executive functions in incarcerated violent offenders**.
 
 # Clear environment
 
@@ -22,37 +20,43 @@ Clear any existing data, values and functions from the global environment.
 rm(list = ls())
 ```
 
-# Start timer
+# Initial set-up
 
-Not really necessary, but I want to keep track of total running time for the entire analysis pipeline.
+## Timer
 
 ```{r}
-ptm <- proc.time()
+# clear timer and timer log, just in case
+tic.clear()
+tic.clearlog()
+
+# start timer
+tic("Full analysis")
 ```
-
-# Set-up
-
-Setting up paths, loading packages and reading data.
-
 ## Paths and keys
 
-Paths and [API keys](https://developers.google.com/sheets/api/guides/authorizing#APIKey) are stored in an external script for security reasons. Variables written in ALL CAPS are pre-defined paths/keys.
+Paths are stored in an external script for security reasons. 
 
 ```{r}
-source("hidden/pathsandkeys.R")
+source("hidden/path.R")
 ```
 
-## Load packages 
-
-All required packages are stored in a vector.
+## Required packages 
 
 ```{r}
-requiredPackages <- c("foreign", "googlesheets", "ggplot2", "ggcorrplot", "reshape", "caret", "psych", "relaimpo", "sandwich", "cowplot", "magrittr", "lmtest", "car", "broom")
+requiredPackages <- c("foreign",
+                      "psych",
+                      "ReporteRs",
+                      "BayesMed",
+                      "reshape2",
+                      "data.table",
+                      "cowplot",
+                      "ggplot2",
+                      "tictoc")
 ```
 
 The *ipak* script goes through the `requiredPackages` vector and checks if the required packages are installed, installs them if not, then loads them.
 
-```{r message=FALSE, warning=FALSE}
+```{r}
 source("scripts/ipak.R")
 ipak(requiredPackages)
 rm(requiredPackages, ipak)
@@ -62,7 +66,7 @@ rm(requiredPackages, ipak)
 
 The data is read from an SPSS file and the seed is set for reproducibility (I always use the year the analysis was conducted, in this case 2018, to avoid "seed hacking"). The `seed` function uses [Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) by default.
 
-```{r, message=FALSE, warning=FALSE}
+```{r}
 data <- read.spss(DATALOCATION, to.data.frame = TRUE)
 rm(DATALOCATION)
 seed <- 2018
@@ -70,34 +74,34 @@ seed <- 2018
 
 # Data preparation
 
-## Select predictors
+## Select variables
 
-Define the outcome variable and which predictors to use. The names must, obviously, match variable names in the data frame.
+Selec which variables to include in the analysis.
 
 ```{r}
 # outcome variables
-outcomeVariables <- c("facet1", "facet2", "facet3", "facet4")
+psychopathicTraits <- c("facet1", "facet2", "facet3", "facet4")
 
 # EF predictors
-predictorList <- c("IEDstages", "IEDtotaler",
-                   "SWMtotaler", "SWMstrategy",
-                   "SSTSSRT", "SSTMRT",
-                   "SOCMITT5", "SOCPS")
+executiveFunctions <- c("IEDstages", "IEDtotaler",
+                        "SWMtotaler", "SWMstrategy",
+                        "SSTSSRT", "SSTMRT",
+                        "SOCMITT5", "SOCPS")
 
 # PCL-R items
-pclList <- c("pcl1", "pcl2", "pcl3", "pcl4", "pcl5",
-             "pcl6", "pcl7", "pcl8", "pcl9", "pcl10",
-             "pcl11", "pcl12", "pcl13", "pcl14", "pcl15",
-             "pcl16", "pcl17", "pcl18", "pcl19", "pcl20")
+pclItems <- c("pcl1", "pcl2", "pcl3", "pcl4", "pcl5",
+              "pcl6", "pcl7", "pcl8", "pcl9", "pcl10",
+              "pcl11", "pcl12", "pcl13", "pcl14", "pcl15",
+              "pcl16", "pcl17", "pcl18", "pcl19", "pcl20")
 
 # other variables of interest
-otherList <- c("totalscore", "age")
+otherVariables <- c("totalscore", "age")
 
 # subset data to selected variables
-data <- data[, c(pclList, otherList, outcomeVariables, predictorList)]
+data <- data[, c(pclItems, otherVariables, psychopathicTraits, executiveFunctions)]
 
 # drop missing data
-data <- data[complete.cases(data[, c(predictorList, outcomeVariables)]), ]
+data <- data[complete.cases(data[, c(executiveFunctions, psychopathicTraits)]), ]
 
 # convert ms to s
 data$SOCMITT5 <- data$SOCMITT5 / 1000
@@ -105,14 +109,13 @@ data$SSTSSRT <- data$SSTSSRT / 1000
 data$SSTMRT <- data$SSTMRT / 1000
 ```
 
-# Descriptive data
+# Descriptive information
 
 ## Table 1
 
-Table 1 in the manuscript consists of an overview of numerical variables as well as zero-order correlations. Results are stored on Google Drive using the `googlesheets` package. See *table_1.R* for additional details.
+Table 1 in the manuscript consists of an overview of numerical variables. See *table1.R* for details.
 
 ```{r}
-source("scripts/correlationtable.R")
 source("scripts/table1.R")
 ```
 
@@ -124,106 +127,49 @@ source("scripts/table1.R")
 source("scripts/internalconsistency.R")
 ```
 
-## Diagostics
+# Zero-order correlations
 
-Before going further let's do a simple diagnostic check on the linear models. Some [heteroscedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity) is evident, thus, heteroscedasticity-consistent standard errors will be used throughout. Looking at [Q-Q plots](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot), some deviations from normality are seen, although not enough to warrant further actions. See *diagnostics.R* for details.
+## Classical analysis
+
+Classical in this case is just plain old [null hypothesis statistical testing](https://en.wikipedia.org/wiki/Statistical_hypothesis_testing), as in *p*-values.
 
 ```{r}
-source("scripts/diagnostics.R")
+source("scripts/classicalanalysis.R")
 ```
 
-# Model building
+## Bayesian analysis
 
-## Model formulas
-
-Model formulas are stored in a list.
+**Note!** This step uses [Markov chain Monte Carlo](https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo) to estimate the posterior distribution, which takes a significant amount of time.
 
 ```{r}
-formulaList <- as.list(NULL)
-formulaList <- lapply(outcomeVariables, function(i) {
-  paste(i, paste(predictorList, collapse = "+"), sep = "~")
-  })
+# select number of MCMC iterations and number of burn-in iterations
+niter <- 100
+nburnin <- 10
+
+# start timer and grap some popcorn
+tic("Bayesian analysis using MCMC")
+source("scripts/bayesiananalysis.R")
+toc()
 ```
 
-## Estimate regression models
+# Figure 1
 
-This is where the fun stuff happens. We use the `lapply` function to loop through a series of lists:
-
-1. Loop through `formulaList` using `lm` to estimate regression models, and store the results in `modelList`
-2. Loop through the newly created `modelList` using:
-    + `waldtest`, `coeftest` and `confint.robust` with [heteroscedasticity consistent (HC)](https://en.wikipedia.org/wiki/Heteroscedasticity-consistent_standard_errors)
-    + `vif` for extracting [variance inflation factors](https://en.wikipedia.org/wiki/Variance_inflation_factor)
-    + `calc.relimp` for relative importance estimation
-3. Loop through `formulaList` again using `train` to estimate cross-validated *R*<sup>2</sup>
+Figure 1 is a three-panel overview Pearson's *r*, *p*-values and Bayes factors arranged in a matrix. See *figure1.R* for details.
 
 ```{r}
-source("scripts/confintrobust.R")
-
-# estimate linear models
-modelList <- lapply(formulaList, function(x, data) eval(bquote(lm(.(x), data))), data = data)
-
-# lapply through modelList
-modelWald <- lapply(modelList, waldtest, test = "F", vcov = vcovHC)
-modelHC   <- lapply(modelList, coeftest, vcov = vcovHC)
-modelCI   <- lapply(modelList, confint.robust)
-modelVIF  <- lapply(modelList, vif)
-modelRI   <- lapply(modelList, calc.relimp, type = "lmg", rela = FALSE)
-
-# cross-validation
-modelCV   <- NULL
-control = trainControl(method = "repeatedcv", number = 10, repeats = 100)
-set.seed(seed)
-modelCV <- lapply(formulaList, function(i) {
-  train(as.formula(i), data = data, method = "lm", trControl = control)})
-
-rm(formulaList, control)
-```
-
-## Model summary
-
-A summary of each regression model is stored in a text file. See *regressionsummary.R* for details.
-
-```{r}
-source("scripts/regressionsummary.R")
-```
-
-## Table 2
-
-Table 2 contains detailed model summaries, such as betas, *p*-values and CIs. See *table2.R* for details. Results are stored using `googlesheets`.
-
-```{r}
-source("scripts/table2.R")
-```
-
-## Relative importance estimation
-
-Relative importance estimates are plotted and saved in .tiff format. See *relaimpo.R* for details. Note that model relative importane sum to unadjusted model *R*<sup>2</sup>.
-
-```{r}
-source("scripts/relaimpo.R")
-ggsave(filename = "hidden/figures/riplot.tiff",
-       plot = riplot,
-       height = 8,
-       width = 20,
+source("scripts/figure1.R")
+ggsave(filename = "hidden/figures/figure1.tiff",
+       plot = bayesplot,
+       height = 11.69,
+       width = 7.5,
        dpi = 300,
-       units = "cm",
-       compression = "lzw")
-rm(riplot)
-```
-
-## Variance inflation factors
-
-Collinearity is assessed by looking at variance inflation factors (VIFs). VIFs are presented in text, so we only want a .txt with the output.
-
-```{r}
-vifs <- capture.output(cat("The VIFs range from", range(modelVIF)[1], "to", range(modelVIF)[2]))
-write(vifs, file = "hidden/results/vifs.txt")
-remove(modelVIF, vifs)
+       units = "in")
+rm(bayesplot)
 ```
 
 # Session info
 
-A text file with the session info.
+Save a text file with full session info for future reference.
 
 ```{r}
 sessInfo <- capture.output(sessionInfo())
@@ -232,9 +178,8 @@ write(sessInfo, file = "log/sessioninfo.txt")
 
 # Stop timer
 
-Stop timer, store results in a text file.
+Analysis is done! Let's stop the timer.
 
 ```{r}
-time <- proc.time() - ptm
-write(capture.output(paste("analysis took", round(time[3]/60, 0), "minute(s)")), file = "log/timer.txt")
+toc()
 ```

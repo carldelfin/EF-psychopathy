@@ -1,6 +1,6 @@
-## Predicting psychopathic traits in incarcerated violent offenders using measures of executive functions
+## Examining associations between psychopathic traits and executive functions in incarcerated violent offenders
 
-This GitHub repository contains all code used in the study *Predicting psychopathic traits in incarcerated violent offenders using measures of executive functions*. The study is published in XXXX, DOI:XXXX.
+This GitHub repository contains all code used in the study *Examining associations between psychopathic traits and executive functions in incarcerated violent offenders*. The study is published in XXXX, DOI:XXXX.
 
 The repository is structured as follows:
 

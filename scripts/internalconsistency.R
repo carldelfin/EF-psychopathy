@@ -1,4 +1,4 @@
-pcltotal <- data[, pclList]
+pcltotal <- data[, pclItems]
 
 totalAlpha <- psych::alpha(pcltotal)
 facet1Alpha <- psych::alpha(pcltotal[, c("pcl1", "pcl2", "pcl4", "pcl5")])
@@ -62,10 +62,14 @@ colnames(consistencydata) <- c("PCL-R variable",
                                "Mean corrected item-total correlation",
                                "Mean inter-item correlation")
 
-gd_results <- gs_key(KEY)
-gd_results <- gd_results %>%
-  gs_edit_cells(ws = "consistency", input = consistencydata)
+# create Word document
+doc <- docx()
+doc <- addTitle(doc, "Internal consistency")
+doc <- addFlexTable(doc, FlexTable(consistencydata))
+
+# save
+writeDoc(doc, file = "hidden/results/internalconsistency.docx")
 
 rm(pcltotal, totalAlpha, facet1Alpha, facet2Alpha, 
-   facet3Alpha, facet4Alpha, consistencydata,
-   calpha, itemmax, itemmin, mcit, miic, varnames, pclList)
+   facet3Alpha, facet4Alpha, consistencydata, doc,
+   calpha, itemmax, itemmin, mcit, miic, varnames, pclItems)
