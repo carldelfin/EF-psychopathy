@@ -27,6 +27,9 @@ rm(list = ls())
 Not really necessary *per se*, but the analysis does take some time to run, owing to the MCMC procedure.
 
 ```{r}
+# load tictoc packages
+library("tictoc")
+
 # clear timer and timer log
 tic.clear()
 tic.clearlog()
@@ -53,8 +56,7 @@ requiredPackages <- c("foreign",
                       "reshape2",
                       "data.table",
                       "cowplot",
-                      "ggplot2",
-                      "tictoc")
+                      "ggplot2")
 ```
 
 The *ipak.R* script goes through the `requiredPackages` vector and checks if the required packages are installed, installs them if not, then loads them. Note that other packages are loaded as dependencies. For a complete overivew, see *sessioninfo.txt*.
