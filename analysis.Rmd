@@ -163,11 +163,11 @@ Figure 1 is a three-panel overview Pearson's *r* values, *p*-values and Bayes fa
 
 ```{r}
 source("scripts/figure1.R")
-ggsave(filename = "hidden/figures/figure1.tiff",
+ggsave(filename = "hidden/figures/figure1.eps",
        plot = bayesplot,
        height = 7.5,
        width = 13,
-       dpi = 600,
+       dpi = 900,
        units = "in")
 rm(bayesplot)
 ```
