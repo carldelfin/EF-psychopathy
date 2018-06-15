@@ -27,7 +27,7 @@ rm(list = ls())
 Not really necessary *per se*, but the analysis does take some time to run, owing to the MCMC procedure.
 
 ```{r}
-# load tictoc packages
+# load tictoc package
 library("tictoc")
 
 # clear timer and timer log
@@ -151,7 +151,7 @@ source("scripts/classicalanalysis.R")
 niter <- 20000
 nburnin <- 2000
 
-# start timer and grap some popcorn
+# start timer and grab some popcorn
 tic("Bayesian analysis using MCMC")
 source("scripts/bayesiananalysis.R")
 toc()
