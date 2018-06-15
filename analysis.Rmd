@@ -159,7 +159,7 @@ toc()
 
 # Figure 1
 
-Figure 1 is a three-panel overview Pearson's *r* values, *p*-values and Bayes factors arranged in a matrix. See *figure1.R* for details.
+Figure 1 is a four-panel overview Pearson's *r* values, *p*-values, posterior probability and Bayes factors. See *figure1.R* for details.
 
 ```{r}
 source("scripts/figure1.R")
