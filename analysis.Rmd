@@ -136,7 +136,7 @@ source("scripts/internalconsistency.R")
 
 ## Classical analysis
 
-Classical in this case is just plain old [null hypothesis statistical testing](https://en.wikipedia.org/wiki/Statistical_hypothesis_testing), as in *p*-values.
+Classical in this case is just plain old [null hypothesis statistical testing](https://en.wikipedia.org/wiki/Statistical_hypothesis_testing).
 
 ```{r}
 source("scripts/classicalanalysis.R")
