@@ -1,5 +1,5 @@
 ---
-title: "Examining associations between psychopathic traits and executive functions in incarcerated violent offenders"
+title: "Examining Associations Between Psychopathic Traits and Executive Functions in Incarcerated Violent Offenders"
 author: "Carl Delfin"
 date: "30 May 2018"
 output:
@@ -10,7 +10,7 @@ output:
 
 # Introduction
 
-This RMarkdown document contains the R code used for all analysis in the study **Examining associations between psychopathic traits and executive functions in incarcerated violent offenders**.
+This RMarkdown document contains the R code used for all analysis in the study [Examining Associations Between Psychopathic Traits and Executive Functions in Incarcerated Violent Offenders](https://www.frontiersin.org/articles/10.3389/fpsyt.2018.00310/full).
 
 # Clear environment
 
